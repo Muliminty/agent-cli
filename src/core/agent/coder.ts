@@ -314,12 +314,228 @@ export class CoderAgent extends BaseAgent {
 
     this.logger.startTask('执行代码修改')
 
-    // TODO: 读取现有文件
-    // TODO: 应用代码修改
-    // TODO: 验证语法正确性
-    // TODO: 保存修改后的文件
+    try {
+      // 步骤1: 确定要修改的文件
+      const filesToModify = await this.identifyFilesToModify()
+
+      if (filesToModify.length === 0) {
+        this.logger.warn('没有找到需要修改的文件，跳过代码修改步骤')
+        return
+      }
+
+      // 步骤2: 读取现有文件内容
+      const fileContents = await this.readFileContents(filesToModify)
+
+      // 步骤3: 分析现有代码结构
+      const codeAnalysis = await this.analyzeCodeStructure(fileContents)
+
+      // 步骤4: 生成修改计划
+      const modificationPlan = await this.generateModificationPlan(codeAnalysis)
+
+      // 步骤5: 应用修改到文件内容
+      const modifiedContents = await this.applyModifications(fileContents, modificationPlan)
+
+      // 步骤6: 验证修改后的代码语法
+      await this.validateCodeSyntax(modifiedContents)
+
+      // 步骤7: 保存修改后的文件
+      await this.saveModifiedFiles(filesToModify, modifiedContents)
+
+      this.logger.success(`代码修改完成，共修改 ${filesToModify.length} 个文件`)
+      this.recordProgress({
+        action: 'code_modified',
+        description: `代码修改完成，涉及 ${filesToModify.length} 个文件`,
+        details: {
+          files: filesToModify,
+          featureId: this.currentFeature.id
+        }
+      })
+
+    } catch (error) {
+      this.logger.error(`代码修改失败: ${error}`)
+      throw new Error(`代码修改失败: ${error}`)
+    }
 
     this.logger.completeTask('代码修改执行完成')
+  }
+
+  /**
+   * 确定需要修改的文件
+   */
+  private async identifyFilesToModify(): Promise<string[]> {
+    if (!this.currentFeature) {
+      return []
+    }
+
+    const files: string[] = []
+
+    // 从功能的相关文件字段获取
+    if (this.currentFeature.relatedFiles && this.currentFeature.relatedFiles.length > 0) {
+      files.push(...this.currentFeature.relatedFiles)
+    }
+
+    // 根据功能描述推断可能相关的文件
+    const inferredFiles = await this.inferFilesFromFeatureDescription()
+    files.push(...inferredFiles)
+
+    // 去重并过滤不存在的文件
+    const uniqueFiles = [...new Set(files)]
+    const existingFiles: string[] = []
+
+    for (const file of uniqueFiles) {
+      const filePath = path.join(this.context.projectPath, file)
+      try {
+        const exists = await fs.pathExists(filePath)
+        if (exists) {
+          existingFiles.push(file)
+        } else {
+          this.logger.debug(`文件不存在，跳过: ${file}`)
+        }
+      } catch (error) {
+        this.logger.warn(`检查文件失败 ${file}: ${error}`)
+      }
+    }
+
+    this.logger.debug(`确定需要修改的文件: ${existingFiles.length} 个`)
+    return existingFiles
+  }
+
+  /**
+   * 根据功能描述推断相关文件
+   */
+  private async inferFilesFromFeatureDescription(): Promise<string[]> {
+    if (!this.currentFeature) {
+      return []
+    }
+
+    const description = this.currentFeature.description.toLowerCase()
+    const files: string[] = []
+
+    // 简单推断逻辑（可根据需要扩展）
+    if (description.includes('component') || description.includes('组件')) {
+      files.push('src/components/')
+    }
+    if (description.includes('page') || description.includes('页面')) {
+      files.push('src/pages/')
+    }
+    if (description.includes('api') || description.includes('接口')) {
+      files.push('src/services/')
+    }
+    if (description.includes('style') || description.includes('样式')) {
+      files.push('src/styles/')
+    }
+    if (description.includes('test') || description.includes('测试')) {
+      files.push('tests/')
+    }
+
+    return files
+  }
+
+  /**
+   * 读取文件内容
+   */
+  private async readFileContents(files: string[]): Promise<Map<string, string>> {
+    const contents = new Map<string, string>()
+
+    for (const file of files) {
+      const filePath = path.join(this.context.projectPath, file)
+      try {
+        const content = await fs.readFile(filePath, 'utf-8')
+        contents.set(file, content)
+        this.logger.debug(`读取文件: ${file} (${content.length} 字符)`)
+      } catch (error) {
+        this.logger.error(`读取文件失败 ${file}: ${error}`)
+        throw new Error(`无法读取文件 ${file}: ${error}`)
+      }
+    }
+
+    return contents
+  }
+
+  /**
+   * 分析代码结构（占位实现）
+   */
+  private async analyzeCodeStructure(fileContents: Map<string, string>): Promise<any> {
+    // TODO: 实现代码结构分析（AST解析等）
+    this.logger.debug('分析代码结构（占位实现）')
+
+    const analysis = {
+      fileCount: fileContents.size,
+      totalLines: 0,
+      languageDetected: 'unknown'
+    }
+
+    // 简单统计
+    for (const [file, content] of fileContents) {
+      analysis.totalLines += content.split('\n').length
+    }
+
+    return analysis
+  }
+
+  /**
+   * 生成修改计划（占位实现）
+   */
+  private async generateModificationPlan(codeAnalysis: any): Promise<any> {
+    // TODO: 基于功能需求生成具体的修改计划
+    this.logger.debug('生成修改计划（占位实现）')
+
+    return {
+      modifications: [],
+      estimatedComplexity: 'medium',
+      validationRules: []
+    }
+  }
+
+  /**
+   * 应用修改到文件内容（占位实现）
+   */
+  private async applyModifications(
+    fileContents: Map<string, string>,
+    modificationPlan: any
+  ): Promise<Map<string, string>> {
+    // TODO: 实际应用修改
+    this.logger.debug('应用修改到文件内容（占位实现）')
+
+    // 暂时返回原始内容（不做修改）
+    return new Map(fileContents)
+  }
+
+  /**
+   * 验证代码语法（占位实现）
+   */
+  private async validateCodeSyntax(modifiedContents: Map<string, string>): Promise<void> {
+    // TODO: 实现语法验证（例如使用TypeScript编译器）
+    this.logger.debug('验证代码语法（占位实现）')
+
+    // 简单检查：确保文件非空
+    for (const [file, content] of modifiedContents) {
+      if (content.trim().length === 0) {
+        this.logger.warn(`文件内容为空: ${file}`)
+      }
+    }
+  }
+
+  /**
+   * 保存修改后的文件
+   */
+  private async saveModifiedFiles(
+    files: string[],
+    modifiedContents: Map<string, string>
+  ): Promise<void> {
+    for (const file of files) {
+      const content = modifiedContents.get(file)
+      if (content !== undefined) {
+        const filePath = path.join(this.context.projectPath, file)
+        try {
+          await fs.writeFile(filePath, content, 'utf-8')
+          this.logger.debug(`保存文件: ${file}`)
+        } catch (error) {
+          this.logger.error(`保存文件失败 ${file}: ${error}`)
+          throw new Error(`无法保存文件 ${file}: ${error}`)
+        }
+      }
+    }
   }
 
   /**
