@@ -1,0 +1,43 @@
+# 依赖
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# 构建输出
+dist/
+coverage/
+*.log
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 运行时数据
+*.pid
+*.seed
+*.pid.lock
+
+# 编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 测试相关
+puppeteer/.local-chromium/
+
+# 临时文件
+tmp/
+temp/
+
+# 项目特定文件
+agent.config.json
+claude-progress.txt
+feature-list.json

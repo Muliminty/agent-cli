@@ -1,0 +1,42 @@
+#!/usr/bin/env node
+
+/**
+ * 长效运行智能体CLI工具 - 入口文件
+ * 设计思路：作为可执行文件入口，加载编译后的主模块
+ *
+ * 注意事项：
+ * 1. 需要文件可执行权限: chmod +x bin/agent-cli
+ * 2. 使用ESM模块系统，与tsconfig配置一致
+ * 3. 错误处理确保友好的用户反馈
+ */
+
+import { main } from '../dist/cli/index.js'
+
+// 错误处理包装
+async function run() {
+  try {
+    await main()
+  } catch (error) {
+    console.error('❌ CLI执行错误:')
+
+    if (error instanceof Error) {
+      console.error(`   消息: ${error.message}`)
+
+      // 提供调试信息
+      if (process.env.DEBUG === 'true') {
+        console.error('\n🔍 详细堆栈:')
+        console.error(error.stack)
+      } else {
+        console.error('   提示: 设置 DEBUG=true 查看详细错误信息')
+      }
+    } else {
+      console.error(`   未知错误: ${error}`)
+    }
+
+    console.error('\n💡 尝试运行: agent-cli --help 查看使用说明')
+    process.exit(1)
+  }
+}
+
+// 执行主函数
+run()
