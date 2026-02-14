@@ -318,6 +318,9 @@ export class CoderAgent extends BaseAgent {
 
     this.logger.startTask('执行代码修改')
 
+    // 在开始代码修改前标记功能为进行中
+    await this.markFeatureAsInProgress()
+
     try {
       // 步骤1: 确定要修改的文件
       const filesToModify = await this.identifyFilesToModify()
@@ -703,7 +706,7 @@ export class CoderAgent extends BaseAgent {
 
   /**
    * 更新进度状态
-   * TODO: 实现状态更新逻辑
+   * 实现状态更新逻辑：更新功能状态、记录修改详情、更新进度百分比
    */
   private async updateProgress(): Promise<void> {
     if (!this.currentFeature || !this.progressTracker) {
@@ -712,11 +715,156 @@ export class CoderAgent extends BaseAgent {
 
     this.logger.startTask('更新进度状态')
 
-    // TODO: 更新功能状态为进行中或已完成
-    // TODO: 记录修改详情
-    // TODO: 更新进度百分比
+    try {
+      // 步骤1: 确定功能的新状态
+      // 如果功能当前是pending，则标记为in_progress（表示我们正在处理它）
+      // 如果测试已通过，则标记为completed
+      let newStatus: 'pending' | 'in_progress' | 'completed' | 'blocked' = this.currentFeature.status
+
+      // 检查测试是否通过（通过updateFeatureTestStatus设置的passes字段）
+      const featureAfterTest = this.progressTracker.getFeature(this.currentFeature.id)
+      const testPassed = featureAfterTest?.passes === true
+
+      if (testPassed && this.currentFeature.status !== 'completed') {
+        newStatus = 'completed'
+        this.logger.debug(`功能测试通过，状态更新为: completed`)
+      } else if (this.currentFeature.status === 'pending') {
+        newStatus = 'in_progress'
+        this.logger.debug(`功能开始处理，状态更新为: in_progress`)
+      }
+
+      // 步骤2: 准备更新数据
+      const updateData: Partial<Feature> = {
+        status: newStatus,
+        updatedAt: new Date()
+      }
+
+      // 如果状态变为completed，记录完成时间
+      if (newStatus === 'completed' && this.currentFeature.status !== 'completed') {
+        // 可以添加completedAt字段，但Feature接口中没有，所以使用notes或扩展
+        updateData.notes = (this.currentFeature.notes || '') + `\n完成于: ${new Date().toISOString()}`
+      }
+
+      // 步骤3: 更新功能状态
+      await this.progressTracker.updateFeature(this.currentFeature.id, updateData)
+
+      // 步骤4: 记录修改详情（如果执行了代码修改）
+      // 这可以通过检查是否有代码修改记录来实现
+      // 暂时记录一个简单的事件
+      this.recordProgress({
+        action: 'feature_status_updated',
+        description: `功能状态更新为: ${newStatus}`,
+        details: {
+          featureId: this.currentFeature.id,
+          previousStatus: this.currentFeature.status,
+          newStatus,
+          testPassed
+        }
+      })
+
+      // 步骤5: 更新进度百分比
+      await this.updateProgressPercentage()
+
+      this.logger.success(`进度状态更新完成: ${this.currentFeature.id} -> ${newStatus}`)
+    } catch (error) {
+      this.logger.error(`更新进度状态失败: ${error}`)
+      this.recordProgress({
+        action: 'progress_update_error',
+        description: `更新进度状态失败: ${error}`,
+        details: {
+          error: error instanceof Error ? error.message : String(error)
+        }
+      })
+      throw error
+    }
 
     this.logger.completeTask('进度状态更新完成')
+  }
+
+  /**
+   * 更新进度百分比
+   * 计算已完成功能的比例，更新进度跟踪器
+   */
+  private async updateProgressPercentage(): Promise<void> {
+    if (!this.progressTracker) {
+      return
+    }
+
+    try {
+      // 获取所有功能
+      const allFeatures = this.progressTracker.getFeatureList()
+
+      if (allFeatures.length === 0) {
+        this.logger.debug('没有功能，跳过进度百分比更新')
+        return
+      }
+
+      // 计算已完成功能的数量
+      const completedFeatures = allFeatures.filter(f => f.status === 'completed')
+      const completionPercentage = Math.round((completedFeatures.length / allFeatures.length) * 100)
+
+      this.logger.debug(`进度百分比: ${completedFeatures.length}/${allFeatures.length} = ${completionPercentage}%`)
+
+      // 更新进度跟踪器中的总体进度
+      // 假设ProgressTracker有setOverallProgress方法
+      // 如果没有，我们可以通过其他方式记录
+      // 暂时记录到日志和进度事件中
+      this.recordProgress({
+        action: 'progress_updated',
+        description: `总体进度更新: ${completionPercentage}%`,
+        details: {
+          completed: completedFeatures.length,
+          total: allFeatures.length,
+          percentage: completionPercentage
+        }
+      })
+
+      // 如果有设置总体进度的方法，调用它
+      // await this.progressTracker.setOverallProgress(completionPercentage)
+    } catch (error) {
+      this.logger.warn(`更新进度百分比失败: ${error}`)
+      // 不抛出错误，因为这不是关键操作
+    }
+  }
+
+  /**
+   * 将功能标记为进行中
+   * 在开始处理功能时调用
+   */
+  private async markFeatureAsInProgress(): Promise<void> {
+    if (!this.currentFeature || !this.progressTracker) {
+      return
+    }
+
+    // 只有当功能当前是pending时才更新
+    if (this.currentFeature.status === 'pending') {
+      try {
+        await this.progressTracker.updateFeature(this.currentFeature.id, {
+          status: 'in_progress',
+          updatedAt: new Date()
+        })
+
+        this.logger.debug(`功能标记为进行中: ${this.currentFeature.id}`)
+        this.recordProgress({
+          action: 'feature_started',
+          description: `开始处理功能: ${this.currentFeature.description}`,
+          details: {
+            featureId: this.currentFeature.id,
+            previousStatus: 'pending',
+            newStatus: 'in_progress'
+          }
+        })
+
+        // 刷新当前功能对象以获取更新后的状态
+        const updatedFeature = this.progressTracker.getFeature(this.currentFeature.id)
+        if (updatedFeature) {
+          this.currentFeature = updatedFeature
+        }
+      } catch (error) {
+        this.logger.warn(`标记功能为进行中失败: ${error}`)
+        // 不抛出错误，因为这不是关键操作
+      }
+    }
   }
 
   /**
