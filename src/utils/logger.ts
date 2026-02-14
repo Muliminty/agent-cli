@@ -268,6 +268,13 @@ export class Logger {
       this.logStream = null
     }
   }
+
+  /**
+   * 检查是否启用调试模式
+   */
+  isDebugEnabled(): boolean {
+    return this.config.debug === true || this.config.level === 'debug'
+  }
 }
 
 /**

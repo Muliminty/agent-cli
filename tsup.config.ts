@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/**/*.ts'],
   format: ['esm'],
   target: 'node18',
   splitting: false,
@@ -24,5 +24,11 @@ export default defineConfig({
     'puppeteer',
     'execa',
     'boxen'
+  ],
+  // 排除测试文件和类型声明文件
+  ignore: [
+    'src/**/*.test.ts',
+    'src/**/*.spec.ts',
+    'src/**/*.d.ts'
   ]
 })
