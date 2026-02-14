@@ -207,18 +207,37 @@ export class FileUtils {
       if (modeType === 'append') {
         const existingResult = await this.readFile(absolutePath, {
           throwIfMissing: false,
-          encoding
+          encoding,
+          defaultValue: ''
         })
-        if (existingResult.success) {
-          finalContent = existingResult.data + writeContent
+        if (existingResult.success && existingResult.data !== undefined) {
+          // 确保existingResult.data是字符串或Buffer
+          const existingData = existingResult.data
+          if (Buffer.isBuffer(existingData) || Buffer.isBuffer(writeContent)) {
+            // 如果任一内容是Buffer，将两者都转换为Buffer进行连接
+            const existingBuffer = Buffer.isBuffer(existingData) ? existingData : Buffer.from(existingData, encoding)
+            const writeBuffer = Buffer.isBuffer(writeContent) ? writeContent : Buffer.from(writeContent, encoding)
+            finalContent = Buffer.concat([existingBuffer, writeBuffer])
+          } else {
+            // 都是字符串，直接连接
+            finalContent = String(existingData) + String(writeContent)
+          }
         }
       } else if (modeType === 'prepend') {
         const existingResult = await this.readFile(absolutePath, {
           throwIfMissing: false,
-          encoding
+          encoding,
+          defaultValue: ''
         })
-        if (existingResult.success) {
-          finalContent = writeContent + existingResult.data
+        if (existingResult.success && existingResult.data !== undefined) {
+          const existingData = existingResult.data
+          if (Buffer.isBuffer(existingData) || Buffer.isBuffer(writeContent)) {
+            const existingBuffer = Buffer.isBuffer(existingData) ? existingData : Buffer.from(existingData, encoding)
+            const writeBuffer = Buffer.isBuffer(writeContent) ? writeContent : Buffer.from(writeContent, encoding)
+            finalContent = Buffer.concat([writeBuffer, existingBuffer])
+          } else {
+            finalContent = String(writeContent) + String(existingData)
+          }
         }
       }
 
@@ -791,6 +810,136 @@ export class FileUtils {
         duration: Date.now() - startTime
       }
     }
+  }
+
+  /**
+   * 获取文件扩展名（小写）
+   */
+  static getFileExtension(filePath: string): string {
+    const ext = path.extname(filePath)
+    return ext ? ext.toLowerCase().substring(1) : '' // 移除点号
+  }
+
+  /**
+   * 获取文件名（不含扩展名）
+   */
+  static getFileNameWithoutExtension(filePath: string): string {
+    const basename = path.basename(filePath)
+    const ext = path.extname(basename)
+    return ext ? basename.slice(0, -ext.length) : basename
+  }
+
+  /**
+   * 检查文件是否为文本文件（基于扩展名）
+   */
+  static isTextFileByExtension(filePath: string): boolean {
+    const ext = this.getFileExtension(filePath)
+    const textExtensions = [
+      'txt', 'md', 'json', 'js', 'ts', 'jsx', 'tsx', 'html', 'htm', 'css', 'scss',
+      'xml', 'yml', 'yaml', 'ini', 'cfg', 'conf', 'log', 'csv', 'tsv', 'sql'
+    ]
+    return textExtensions.includes(ext)
+  }
+
+  /**
+   * 检查文件是否为图片文件（基于扩展名）
+   */
+  static isImageFileByExtension(filePath: string): boolean {
+    const ext = this.getFileExtension(filePath)
+    const imageExtensions = [
+      'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico', 'tiff', 'tif'
+    ]
+    return imageExtensions.includes(ext)
+  }
+
+  /**
+   * 检查文件是否为代码文件（基于扩展名）
+   */
+  static isCodeFileByExtension(filePath: string): boolean {
+    const ext = this.getFileExtension(filePath)
+    const codeExtensions = [
+      'js', 'ts', 'jsx', 'tsx', 'py', 'java', 'cpp', 'c', 'h', 'hpp',
+      'go', 'rs', 'rb', 'php', 'cs', 'swift', 'kt', 'scala', 'm', 'mm'
+    ]
+    return codeExtensions.includes(ext)
+  }
+
+  /**
+   * 规范化路径，确保一致的路径分隔符
+   */
+  static normalizePath(filePath: string): string {
+    return path.normalize(filePath).replace(/\\/g, '/')
+  }
+
+  /**
+   * 获取相对路径（相对于当前工作目录）
+   */
+  static getRelativePath(filePath: string, baseDir?: string): string {
+    const base = baseDir || process.cwd()
+    return path.relative(base, filePath)
+  }
+
+  /**
+   * 检查路径是否在指定目录内
+   */
+  static isPathInDirectory(filePath: string, dirPath: string): boolean {
+    const relative = path.relative(dirPath, filePath)
+    return !relative.startsWith('..') && !path.isAbsolute(relative)
+  }
+
+  /**
+   * 获取文件大小格式化字符串
+   */
+  static formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  /**
+   * 批量处理文件
+   */
+  static async batchProcessFiles(
+    filePaths: string[],
+    processor: (filePath: string) => Promise<any>,
+    options: {
+      concurrency?: number
+      onProgress?: (processed: number, total: number, filePath: string) => void
+    } = {}
+  ): Promise<Array<{ filePath: string; success: boolean; result?: any; error?: string }>> {
+    const { concurrency = 5, onProgress } = options
+    const results: Array<{ filePath: string; success: boolean; result?: any; error?: string }> = []
+    let processed = 0
+    const total = filePaths.length
+
+    // 按批次处理
+    for (let i = 0; i < filePaths.length; i += concurrency) {
+      const batch = filePaths.slice(i, i + concurrency)
+      const batchPromises = batch.map(async (filePath) => {
+        try {
+          const result = await processor(filePath)
+          return { filePath, success: true, result }
+        } catch (error) {
+          return {
+            filePath,
+            success: false,
+            error: error instanceof Error ? error.message : String(error)
+          }
+        } finally {
+          processed++
+          if (onProgress) {
+            onProgress(processed, total, filePath)
+          }
+        }
+      })
+
+      const batchResults = await Promise.all(batchPromises)
+      results.push(...batchResults)
+    }
+
+    return results
   }
 }
 
