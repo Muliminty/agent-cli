@@ -21,6 +21,7 @@ import { GitManager } from '../git/manager.js'
 import { createLogger } from '../../utils/logger.js'
 import fs from 'fs-extra'
 import path from 'path'
+import { execa } from 'execa'
 import type { Feature, FeatureList, FeatureStatus, FeatureCategory, FeaturePriority, FeatureComplexity } from '../../types/feature.js'
 import type { Config } from '../../config/schema.js'
 import type { ProjectState } from '../../types/project.js'
@@ -33,6 +34,8 @@ export interface CoderOptions {
   featureId?: string
   /** 是否运行测试 */
   runTests?: boolean
+  /** 测试失败时是否中断流程 */
+  failOnTestFailure?: boolean
   /** 是否自动提交 */
   autoCommit?: boolean
   /** 提交消息模板 */
@@ -68,6 +71,7 @@ export class CoderAgent extends BaseAgent {
     this.options = {
       autoSelect: true,
       runTests: true,
+      failOnTestFailure: true,
       autoCommit: true,
       commitTemplate: 'feat: {feature_description}',
       ...options
@@ -540,17 +544,161 @@ export class CoderAgent extends BaseAgent {
 
   /**
    * 运行测试
-   * TODO: 实现测试运行逻辑
+   * 实现测试验证机制：运行项目的测试套件并检查结果
    */
   private async runTests(): Promise<void> {
     this.logger.startTask('运行测试')
 
-    // TODO: 运行单元测试
-    // TODO: 运行集成测试
-    // TODO: 检查测试结果
-    // TODO: 处理测试失败
+    try {
+      // 步骤1: 检查项目目录中是否有package.json
+      const packageJsonPath = path.join(this.context.projectPath, 'package.json')
+      const packageJsonExists = await fs.pathExists(packageJsonPath)
 
-    this.logger.completeTask('测试运行完成')
+      if (!packageJsonExists) {
+        this.logger.warn('项目目录中没有package.json文件，跳过测试运行')
+        this.recordProgress({
+          action: 'tests_skipped',
+          description: '项目缺少package.json，跳过测试运行'
+        })
+        return
+      }
+
+      // 步骤2: 读取package.json获取测试脚本
+      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'))
+      const testScript = packageJson.scripts?.test
+
+      if (!testScript) {
+        this.logger.warn('package.json中没有定义测试脚本，跳过测试运行')
+        this.recordProgress({
+          action: 'tests_skipped',
+          description: 'package.json中没有测试脚本，跳过测试运行'
+        })
+        return
+      }
+
+      this.logger.debug(`检测到测试脚本: ${testScript}`)
+
+      // 步骤3: 运行测试命令
+      const startTime = Date.now()
+      let testResult
+
+      try {
+        this.logger.info(`正在运行测试: ${testScript}`)
+
+        // 使用execa运行测试命令，设置超时和当前目录
+        testResult = await execa('npm', ['run', 'test'], {
+          cwd: this.context.projectPath,
+          timeout: 300000, // 5分钟超时
+          stdio: 'pipe', // 捕获输出
+          reject: false // 不抛出异常，让我们自己处理
+        })
+      } catch (execError) {
+        this.logger.error(`执行测试命令失败: ${execError}`)
+        throw new Error(`测试执行失败: ${execError}`)
+      }
+
+      const duration = Date.now() - startTime
+      this.logger.debug(`测试执行完成，耗时: ${duration}ms`)
+      this.logger.debug(`测试退出码: ${testResult.exitCode}`)
+      this.logger.debug(`测试输出长度: ${testResult.stdout.length} 字符`)
+
+      // 步骤4: 检查测试结果
+      if (testResult.exitCode === 0) {
+        // 测试通过
+        this.logger.success('✅ 测试通过！')
+        this.recordProgress({
+          action: 'tests_passed',
+          description: `测试通过，耗时: ${duration}ms`,
+          details: {
+            duration,
+            stdoutLength: testResult.stdout.length,
+            stderrLength: testResult.stderr.length
+          }
+        })
+
+        // 更新功能测试状态
+        if (this.currentFeature && this.progressTracker) {
+          await this.updateFeatureTestStatus(true, duration)
+        }
+      } else {
+        // 测试失败
+        this.logger.error('❌ 测试失败！')
+
+        // 记录失败详情
+        const errorDetails = {
+          exitCode: testResult.exitCode,
+          stdoutPreview: testResult.stdout.substring(0, 500),
+          stderrPreview: testResult.stderr.substring(0, 500),
+          duration
+        }
+
+        this.logger.error(`测试失败详情:
+          退出码: ${testResult.exitCode}
+          标准输出预览: ${errorDetails.stdoutPreview}${testResult.stdout.length > 500 ? '...' : ''}
+          错误输出预览: ${errorDetails.stderrPreview}${testResult.stderr.length > 500 ? '...' : ''}`)
+
+        this.recordProgress({
+          action: 'tests_failed',
+          description: `测试失败，退出码: ${testResult.exitCode}`,
+          details: errorDetails
+        })
+
+        // 更新功能测试状态
+        if (this.currentFeature && this.progressTracker) {
+          await this.updateFeatureTestStatus(false, duration)
+        }
+
+        // 根据配置决定是否抛出错误
+        const shouldFailOnTestFailure = this.options.failOnTestFailure !== false // 默认true
+        if (shouldFailOnTestFailure) {
+          throw new Error(`测试失败，退出码: ${testResult.exitCode}`)
+        } else {
+          this.logger.warn('测试失败，但配置为不中断流程，继续执行')
+        }
+      }
+
+      this.logger.completeTask('测试运行完成')
+    } catch (error) {
+      this.logger.error(`测试运行过程出错: ${error}`)
+      this.recordProgress({
+        action: 'tests_error',
+        description: `测试运行过程出错: ${error}`,
+        details: {
+          error: error instanceof Error ? error.message : String(error)
+        }
+      })
+      throw error // 重新抛出，让上层处理
+    }
+  }
+
+  /**
+   * 更新功能测试状态
+   */
+  private async updateFeatureTestStatus(passed: boolean, duration: number): Promise<void> {
+    if (!this.currentFeature || !this.progressTracker) {
+      return
+    }
+
+    try {
+      // 更新功能的测试状态
+      await this.progressTracker.updateFeature(this.currentFeature.id, {
+        passes: passed,
+        // 添加测试结果记录
+        testResults: [
+          {
+            id: `test_${Date.now()}`,
+            description: '自动化测试运行',
+            passed,
+            executionTime: duration,
+            error: passed ? undefined : '测试运行失败'
+          }
+        ]
+      })
+
+      this.logger.debug(`功能 ${this.currentFeature.id} 测试状态更新为: ${passed ? '通过' : '失败'}`)
+    } catch (error) {
+      this.logger.warn(`更新功能测试状态失败: ${error}`)
+    }
   }
 
   /**
