@@ -178,13 +178,16 @@ function outputTextResult(
 ): void {
   logger.divider('监控结果')
 
-  // 基本信息
-  logger.item('模型', result.tokenEstimation.model || options.model)
-  logger.item('总token数', result.tokenEstimation.totalTokens.toString())
-  logger.item('输入token', result.tokenEstimation.inputTokens.toString())
-  logger.item('输出token', result.tokenEstimation.outputTokens.toString())
+  const estimation = result.tokenEstimation || {}
 
-  const percentage = (result.tokenEstimation.utilization * 100).toFixed(1)
+  // 基本信息
+  logger.item('模型', estimation.model || options.model || '未知')
+  logger.item('总token数', (estimation.totalTokens || 0).toString())
+  logger.item('输入token', (estimation.inputTokens || 0).toString())
+  logger.item('输出token', (estimation.outputTokens || 0).toString())
+
+  const utilization = estimation.utilization || 0
+  const percentage = (utilization * 100).toFixed(1)
   logger.item('使用率', `${percentage}%`)
 
   // 安全状态
@@ -205,9 +208,9 @@ function outputTextResult(
   // 详细信息（如果启用详细模式）
   if (options.verbose) {
     logger.divider('详细信息')
-    logger.item('模型限制', result.tokenEstimation.modelContextLimit.toString())
-    logger.item('推荐最大token', result.tokenEstimation.recommendedMaxTokens.toString())
-    logger.item('超过警告阈值', result.tokenEstimation.exceedsWarningThreshold ? '是' : '否')
+    logger.item('模型限制', (estimation.modelContextLimit || 0).toString())
+    logger.item('推荐最大token', (estimation.recommendedMaxTokens || 0).toString())
+    logger.item('超过警告阈值', estimation.exceedsWarningThreshold ? '是' : '否')
   }
 
   logger.divider()
