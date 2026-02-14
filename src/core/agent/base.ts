@@ -487,7 +487,7 @@ export abstract class BaseAgent {
   ): Promise<void> {
     // 这里应该调用进度跟踪器更新功能状态
     // 暂时记录日志，后续集成
-    this.logger.debug(`更新功能状态: ${featureId}`, updates)
+    this.logger.debug(`更新功能状态: ${featureId} - ${JSON.stringify(updates)}`)
   }
 
   /**
