@@ -166,7 +166,7 @@ export class CoderAgent extends BaseAgent {
 
   /**
    * 选择要处理的功能
-   * TODO: 实现增量功能选择逻辑
+   * 实现增量功能选择逻辑：基于优先级、依赖关系、复杂度选择下一个要完成的功能
    */
   private async selectFeatureToImplement(): Promise<void> {
     this.logger.startTask('选择要处理的功能')
@@ -180,14 +180,25 @@ export class CoderAgent extends BaseAgent {
       }
     } else if (this.options.autoSelect && this.progressTracker) {
       // 自动选择下一个功能（基于优先级、依赖关系、复杂度等）
-      // TODO: 实现智能选择算法
       const features = this.progressTracker.getFeatureList()
       const pendingFeatures = features.filter(f => f.status === 'pending')
 
       if (pendingFeatures.length > 0) {
-        // 暂时选择第一个待处理功能
-        this.currentFeature = pendingFeatures[0]
-        this.logger.debug(`自动选择功能: ${this.currentFeature.id} - ${this.currentFeature.description}`)
+        // 过滤掉依赖项未完成的功能
+        const availableFeatures = this.filterFeaturesByDependencies(pendingFeatures, features)
+
+        if (availableFeatures.length > 0) {
+          // 根据优先级和复杂度评分选择最佳功能
+          this.currentFeature = this.selectBestFeature(availableFeatures)
+          this.logger.debug(`智能选择功能: ${this.currentFeature.id} - ${this.currentFeature.description}`)
+        } else {
+          this.logger.warn('有未完成的依赖功能，无法选择新功能')
+          // 检查是否有阻塞的功能（依赖已完成但自身被阻塞）
+          const blockedFeatures = pendingFeatures.filter(f => f.status === 'blocked')
+          if (blockedFeatures.length > 0) {
+            this.logger.info(`有 ${blockedFeatures.length} 个功能处于阻塞状态，需要手动处理`)
+          }
+        }
       }
     }
 
@@ -196,6 +207,82 @@ export class CoderAgent extends BaseAgent {
     } else {
       this.logger.completeTask('没有可处理的功能')
     }
+  }
+
+  /**
+   * 过滤功能列表，只返回依赖项已完成的功能
+   */
+  private filterFeaturesByDependencies(
+    features: Feature[],
+    allFeatures: Feature[]
+  ): Feature[] {
+    // 创建已完成功能的ID集合
+    const completedFeatureIds = new Set(
+      allFeatures
+        .filter(f => f.status === 'completed')
+        .map(f => f.id)
+    )
+
+    return features.filter(feature => {
+      // 如果没有依赖项，直接可用
+      if (!feature.dependencies || feature.dependencies.length === 0) {
+        return true
+      }
+
+      // 检查所有依赖项是否都已完成
+      return feature.dependencies.every(depId => completedFeatureIds.has(depId))
+    })
+  }
+
+  /**
+   * 选择最佳功能（基于优先级和复杂度评分）
+   */
+  private selectBestFeature(features: Feature[]): Feature {
+    // 优先级权重映射
+    const priorityWeights: Record<FeaturePriority, number> = {
+      critical: 100,
+      high: 75,
+      medium: 50,
+      low: 25
+    }
+
+    // 复杂度权重映射（简单功能优先）
+    const complexityWeights: Record<FeatureComplexity, number> = {
+      simple: 100,
+      medium: 75,
+      complex: 50
+    }
+
+    // 计算每个功能的得分
+    const scoredFeatures = features.map(feature => {
+      const priorityScore = priorityWeights[feature.priority] || 50
+      const complexityScore = complexityWeights[feature.estimatedComplexity] || 75
+
+      // 组合得分：优先级权重更高
+      const totalScore = priorityScore * 0.7 + complexityScore * 0.3
+
+      return {
+        feature,
+        score: totalScore,
+        priorityScore,
+        complexityScore
+      }
+    })
+
+    // 按得分降序排序
+    scoredFeatures.sort((a, b) => b.score - a.score)
+
+    // 记录选择原因（用于调试）
+    const selected = scoredFeatures[0]
+    this.logger.debug(`功能选择详情:
+      - 功能ID: ${selected.feature.id}
+      - 描述: ${selected.feature.description}
+      - 总得分: ${selected.score.toFixed(2)}
+      - 优先级得分: ${selected.priorityScore} (${selected.feature.priority})
+      - 复杂度得分: ${selected.complexityScore} (${selected.feature.estimatedComplexity})
+      - 候选功能数: ${features.length}`)
+
+    return selected.feature
   }
 
   /**
