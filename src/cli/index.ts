@@ -171,6 +171,60 @@ async function loadCommandModules(): Promise<CommandModule[]> {
       }
     })
 
+    // 添加上下文监控命令
+    commands.push({
+      command: 'context',
+      description: '上下文监控 - 检查token使用情况和提供预警',
+      options: [
+        {
+          flags: '-i, --input <path>',
+          description: '输入消息文件路径（JSON格式）'
+        },
+        {
+          flags: '-m, --messages <json>',
+          description: '消息内容（JSON字符串格式）'
+        },
+        {
+          flags: '--max-tokens <number>',
+          description: '最大token数',
+          defaultValue: '4096'
+        },
+        {
+          flags: '--model <name>',
+          description: '模型名称',
+          defaultValue: 'claude-3-5-sonnet'
+        },
+        {
+          flags: '-t, --threshold <number>',
+          description: '警告阈值（0-1）',
+          defaultValue: '0.8'
+        },
+        {
+          flags: '-v, --verbose',
+          description: '详细模式'
+        },
+        {
+          flags: '--format <format>',
+          description: '输出格式',
+          defaultValue: 'text'
+        },
+        {
+          flags: '--debug',
+          description: '调试模式'
+        }
+      ],
+      action: async (options: any) => {
+        try {
+          // 动态导入处理函数以避免循环依赖
+          const { handleContextCommand } = await import('./commands/context.js')
+          await handleContextCommand(options)
+        } catch (error) {
+          console.error('❌ 执行context命令失败:', error)
+          throw error
+        }
+      }
+    })
+
   } catch (error) {
     console.error('❌ 加载命令模块失败:', error)
   }
@@ -237,6 +291,8 @@ export async function main() {
       console.log('\n📖 使用示例:')
       console.log('  $ agent-cli init my-project --template react')
       console.log('  $ agent-cli status')
+      console.log('  $ agent-cli context --input messages.json')
+      console.log('  $ agent-cli context --messages \'[{"role":"user","content":"Hello"}]\'')
       console.log('  $ agent-cli next --feature feature-001')
       console.log('  $ agent-cli test --all')
       console.log('\n📁 配置文件: agent.config.json')
