@@ -12,6 +12,7 @@
 import { Command } from 'commander'
 import { createLogger } from '../utils/logger.js'
 import { loadConfig } from '../config/loader.js'
+import { CommandParser, type CommandOptionConfig, type CommandArgumentConfig } from './parser.js'
 import pkg from '../../package.json' assert { type: 'json' }
 const { version } = pkg
 
@@ -23,6 +24,9 @@ interface CommandModule {
     flags: string
     description: string
     defaultValue?: any
+    // 新增验证相关字段（可选，向后兼容）
+    validation?: any
+    parser?: (value: string) => any
   }>
   action: (options: any, config: any) => Promise<void> | void
 }
@@ -234,6 +238,8 @@ async function loadCommandModules(): Promise<CommandModule[]> {
 
 // 注册命令到CLI程序
 function registerCommands(program: Command, commands: CommandModule[]) {
+  const commandParser = new CommandParser()
+
   for (const cmd of commands) {
     const command = program.command(cmd.command).description(cmd.description)
 
@@ -243,6 +249,9 @@ function registerCommands(program: Command, commands: CommandModule[]) {
         command.option(option.flags, option.description, option.defaultValue)
       }
     }
+
+    // 添加验证中间件
+    addValidationToCommand(command, cmd, commandParser)
 
     // 注册动作
     command.action(async (options) => {
@@ -260,6 +269,113 @@ function registerCommands(program: Command, commands: CommandModule[]) {
       }
     })
   }
+}
+
+/**
+ * 为命令添加验证
+ */
+function addValidationToCommand(command: Command, cmd: CommandModule, parser: CommandParser): void {
+  const originalAction = command.action.bind(command)
+
+  command.action(async (...args: any[]) => {
+    try {
+      // 提取参数和选项
+      const options = args[args.length - 1] || {}
+      const commandArgs = args.slice(0, -1)
+
+      // 基本验证（根据选项类型）
+      const validationErrors: string[] = []
+
+      // 验证选项
+      if (cmd.options) {
+        for (const option of cmd.options) {
+          const flagName = extractOptionName(option.flags)
+          const value = options[flagName]
+
+          // 基本类型验证（基于选项名或默认值）
+          if (value !== undefined && value !== null && value !== '') {
+            // 检查数字选项
+            if (option.flags.includes('max-tokens') || option.flags.includes('threshold')) {
+              const num = Number(value)
+              if (isNaN(num)) {
+                validationErrors.push(`选项 "${flagName}" 必须为数字，当前值: "${value}"`)
+              } else if (option.flags.includes('threshold') && (num < 0 || num > 1)) {
+                validationErrors.push(`选项 "${flagName}" 必须在 0 到 1 之间，当前值: ${num}`)
+              } else if (option.flags.includes('max-tokens') && num < 1) {
+                validationErrors.push(`选项 "${flagName}" 必须大于 0，当前值: ${num}`)
+              }
+            }
+
+            // 检查文件路径选项
+            if (option.flags.includes('input') || option.flags.includes('config')) {
+              if (typeof value === 'string') {
+                try {
+                  const exists = await fs.pathExists(path.resolve(value))
+                  if (!exists) {
+                    validationErrors.push(`文件不存在: ${value}`)
+                  }
+                } catch {
+                  validationErrors.push(`无法访问文件: ${value}`)
+                }
+              }
+            }
+
+            // 应用值解析器（如果提供）
+            if (option.parser) {
+              try {
+                options[flagName] = option.parser(value)
+              } catch (error) {
+                validationErrors.push(`选项 "${flagName}" 解析失败: ${error}`)
+              }
+            }
+          }
+        }
+      }
+
+      // 如果有验证错误，输出并退出
+      if (validationErrors.length > 0) {
+        const logger = createLogger({ debug: options.debug })
+        logger.error('❌ 参数验证失败:')
+        for (const error of validationErrors) {
+          logger.error(`  • ${error}`)
+        }
+        logger.info(`\n💡 获取帮助:`)
+        logger.info(`  $ agent-cli ${cmd.command} --help`)
+        process.exit(1)
+      }
+
+      // 调用原始动作
+      return originalAction(...args)
+    } catch (error) {
+      const options = args[args.length - 1] || {}
+      const logger = createLogger({ debug: options.debug })
+      logger.error(`❌ 命令验证失败: ${error}`)
+      if (options.debug && error instanceof Error) {
+        logger.debug(error.stack || '无堆栈信息')
+      }
+      process.exit(1)
+    }
+  })
+}
+
+/**
+ * 从选项标识中提取选项名称
+ */
+function extractOptionName(flags: string): string {
+  // 匹配长选项名（--option-name）
+  const longMatch = flags.match(/--([\w-]+)\b/)
+  if (longMatch) {
+    return longMatch[1]
+  }
+
+  // 匹配短选项名（-o）
+  const shortMatch = flags.match(/-([a-zA-Z])\b/)
+  if (shortMatch) {
+    return shortMatch[1]
+  }
+
+  // 默认返回整个flags（去除空格和特殊字符）
+  return flags.replace(/[^\w-]/g, '')
 }
 
 // 主函数 - CLI入口点

@@ -7,7 +7,7 @@
 
 ## 当前状态
 **阶段**：第二阶段核心模块（智能体框架和上下文监控完成）
-**进度**：42.0%
+**进度**：37.3%
 **最后更新时间**：2026-02-14
 
 ## 已完成的工作 ✅
@@ -66,7 +66,7 @@
 
 #### 1. CLI框架实现
 - [x] `src/cli/index.ts` - CLI入口和参数解析 ✓
-- [ ] `src/cli/parser.ts` - 命令行参数解析器
+- [x] `src/cli/parser.ts` - 命令行参数解析器 ✓
 - [x] `bin/agent-cli` - CLI可执行文件入口 ✓
 - [ ] `src/cli/commands/` - 命令实现目录结构
 
@@ -146,7 +146,7 @@
 - [x] `src/core/agent/context-monitor.ts` - 上下文监控智能体 ✓
 - [x] `src/core/agent/context-monitor-simple.ts` - 简化版上下文监控智能体 ✓
 - [x] 扩展配置类型和schema ✓
-- [ ] `src/cli/commands/context.ts` - 上下文监控CLI命令
+- [x] `src/cli/commands/context.ts` - 上下文监控CLI命令 ✓
 - [ ] 集成到智能体框架中
 
 ## 文件结构现状
@@ -377,5 +377,5 @@ agent-cli/
 **版本控制**: 建议使用 Git 进行版本管理
 
 ---
-*最后更新: 2026-02-13*
+*最后更新: 2026-02-14*
 *文档状态: 进行中*

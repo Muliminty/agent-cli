@@ -3,9 +3,9 @@
 ## 第一阶段：基础框架
 
 ### 1. CLI框架实现
-- [ ] 创建 `bin/agent-cli` 可执行文件入口
-- [ ] 实现 `src/cli/index.ts` - CLI入口和命令路由
-- [ ] 实现 `src/cli/parser.ts` - 命令行参数解析
+- [x] 创建 `bin/agent-cli` 可执行文件入口 ✓
+- [x] 实现 `src/cli/index.ts` - CLI入口和命令路由 ✓
+- [x] 实现 `src/cli/parser.ts` - 命令行参数解析 ✓
 - [ ] 设置 commander.js 基础配置
 - [ ] 添加版本和帮助命令
 
@@ -101,11 +101,11 @@
 - [ ] 添加最佳实践指南
 
 ### 14. 上下文监控系统
-- [ ] 实现 `src/utils/token-counter.ts` - Token估算器
-- [ ] 实现 `src/core/agent/context-monitor.ts` - 上下文监控智能体
-- [ ] 扩展 `src/types/config.ts` - 添加上下文监控配置类型
-- [ ] 扩展 `src/config/schema.ts` - 添加上下文监控配置schema
-- [ ] 实现 `src/cli/commands/context.ts` - 上下文监控CLI命令
+- [x] 实现 `src/utils/token-counter.ts` - Token估算器 ✓
+- [x] 实现 `src/core/agent/context-monitor.ts` - 上下文监控智能体 ✓
+- [x] 扩展 `src/types/config.ts` - 添加上下文监控配置类型 ✓
+- [x] 扩展 `src/config/schema.ts` - 添加上下文监控配置schema ✓
+- [x] 实现 `src/cli/commands/context.ts` - 上下文监控CLI命令 ✓
 - [ ] 集成到现有智能体框架中
 - [ ] 添加上下文警告阈值配置（默认80%）
 - [ ] 实现自动总结功能
@@ -195,16 +195,25 @@
 ### CLI框架和工具
 - [x] `bin/agent-cli` - CLI入口文件
 - [x] `src/cli/index.ts` - CLI框架
+- [x] `src/cli/parser.ts` - 命令行参数解析器
 - [x] `src/utils/logger.ts` - 日志工具
 - [x] `src/config/loader.ts` - 配置加载器
 - [x] `src/config/defaults.ts` - 默认配置常量
 - [x] `src/core/progress/tracker.ts` - 进度跟踪器
 
+### 上下文监控系统
+- [x] `src/utils/token-counter.ts` - Token估算器
+- [x] `src/core/agent/context-monitor.ts` - 上下文监控智能体
+- [x] `src/core/agent/context-monitor-simple.ts` - 简化版上下文监控智能体
+- [x] 扩展 `src/types/config.ts` - 添加上下文监控配置类型
+- [x] 扩展 `src/config/schema.ts` - 添加上下文监控配置schema
+- [x] `src/cli/commands/context.ts` - 上下文监控CLI命令
+
 ---
 **最后更新**: 2026-02-14
 **总任务数**: 83个
-**已完成**: 24个
-**剩余**: 59个
-**进度**: 28.9%
+**已完成**: 31个
+**剩余**: 52个
+**进度**: 37.3%
 
 **建议下一步**: 实现初始化智能体 (`src/core/agent/initializer.ts`)
