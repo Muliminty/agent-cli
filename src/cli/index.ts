@@ -229,6 +229,136 @@ async function loadCommandModules(): Promise<CommandModule[]> {
       }
     })
 
+    // 添加测试命令
+    commands.push({
+      command: 'test',
+      description: '执行端到端自动化测试',
+      options: [
+        {
+          flags: '-s, --suites <pattern>',
+          description: '测试套件路径（支持glob模式，如: tests/*.json）'
+        },
+        {
+          flags: '-c, --config <path>',
+          description: '测试配置文件路径'
+        },
+        {
+          flags: '-u, --url <url>',
+          description: '基础URL（覆盖配置文件）'
+        },
+        {
+          flags: '--no-headless',
+          description: '显示浏览器界面（默认无头模式）'
+        },
+        {
+          flags: '--browser-path <path>',
+          description: '指定浏览器可执行文件路径'
+        },
+        {
+          flags: '--timeout <ms>',
+          description: '默认超时时间（毫秒）',
+          defaultValue: '30000'
+        },
+        {
+          flags: '--continue-on-failure',
+          description: '失败时继续执行其他测试'
+        },
+        {
+          flags: '--screenshot-dir <dir>',
+          description: '截图保存目录',
+          defaultValue: './test-screenshots'
+        },
+        {
+          flags: '--report-dir <dir>',
+          description: '报告保存目录',
+          defaultValue: './test-reports'
+        },
+        {
+          flags: '--html',
+          description: '生成HTML格式报告'
+        },
+        {
+          flags: '-v, --verbose',
+          description: '详细输出模式'
+        },
+        {
+          flags: '--debug',
+          description: '调试模式（输出更多信息）'
+        },
+        {
+          flags: '--parallel <count>',
+          description: '并行执行数量',
+          defaultValue: '1'
+        },
+        {
+          flags: '--retries <count>',
+          description: '最大重试次数',
+          defaultValue: '0'
+        },
+        {
+          flags: '--tags <tags>',
+          description: '标签过滤（逗号分隔）'
+        },
+        {
+          flags: '--format <format>',
+          description: '输出格式: json, html, both',
+          defaultValue: 'both'
+        },
+        {
+          flags: '--history',
+          description: '保存测试历史记录'
+        }
+      ],
+      action: async (options: any) => {
+        try {
+          // 动态导入处理函数以避免循环依赖
+          const { executeTestCommand } = await import('./commands/test.js')
+          await executeTestCommand(options)
+        } catch (error) {
+          console.error('❌ 执行test命令失败:', error)
+          throw error
+        }
+      }
+    })
+
+    // 添加下一步命令
+    commands.push({
+      command: 'next',
+      description: '下一步实现 - 获取下一个推荐功能并开始实现',
+      options: [
+        {
+          flags: '-f, --feature <id>',
+          description: '指定功能ID（默认自动选择下一个）'
+        },
+        {
+          flags: '-s, --start',
+          description: '开始实现功能（将功能标记为进行中）'
+        },
+        {
+          flags: '-i, --info',
+          description: '只显示信息，不修改状态'
+        },
+        {
+          flags: '-v, --verbose',
+          description: '详细模式，显示更多信息'
+        },
+        {
+          flags: '--debug',
+          description: '调试模式'
+        }
+      ],
+      action: async (options: any) => {
+        try {
+          // 动态导入处理函数以避免循环依赖
+          const { handleNextCommand } = await import('./commands/next.js')
+          await handleNextCommand(options)
+        } catch (error) {
+          console.error('❌ 执行next命令失败:', error)
+          throw error
+        }
+      }
+    })
+
   } catch (error) {
     console.error('❌ 加载命令模块失败:', error)
   }
@@ -409,8 +539,11 @@ export async function main() {
       console.log('  $ agent-cli status')
       console.log('  $ agent-cli context --input messages.json')
       console.log('  $ agent-cli context --messages \'[{"role":"user","content":"Hello"}]\'')
-      console.log('  $ agent-cli next --feature feature-001')
-      console.log('  $ agent-cli test --all')
+      console.log('  $ agent-cli test --suites "tests/*.json" --url "https://example.com"')
+      console.log('  $ agent-cli test --config test-config.json --html --verbose')
+      console.log('  $ agent-cli test --suites "tests/login.json" --no-headless --debug')
+      console.log('  $ agent-cli next')
+      console.log('  $ agent-cli next --start --feature feat-123')
       console.log('\n📁 配置文件: agent.config.json')
       console.log('🌐 更多信息: https://github.com/your-repo/agent-cli')
     })

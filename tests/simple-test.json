@@ -1,0 +1,61 @@
+{
+  "id": "simple-test",
+  "name": "简单测试示例",
+  "description": "用于验证测试框架基本功能的简单测试",
+  "tags": ["simple", "example", "smoke"],
+  "steps": [
+    {
+      "id": "navigate-to-google",
+      "name": "导航到Google",
+      "type": "navigate",
+      "params": {
+        "url": "https://www.google.com",
+        "waitUntil": "networkidle0",
+        "description": "打开Google首页"
+      }
+    },
+    {
+      "id": "assert-title",
+      "name": "验证页面标题",
+      "type": "assert",
+      "params": {
+        "assertType": "text",
+        "selector": "title",
+        "expected": "Google",
+        "description": "验证页面标题包含Google"
+      }
+    },
+    {
+      "id": "assert-search-box",
+      "name": "验证搜索框存在",
+      "type": "assert",
+      "params": {
+        "assertType": "visible",
+        "selector": "input[name='q']",
+        "timeout": 5000,
+        "description": "验证搜索框可见"
+      }
+    },
+    {
+      "id": "type-search-query",
+      "name": "输入搜索词",
+      "type": "type",
+      "params": {
+        "selector": "input[name='q']",
+        "text": "Puppeteer自动化测试",
+        "clear": true,
+        "delay": 100,
+        "description": "在搜索框中输入测试文本"
+      }
+    },
+    {
+      "id": "wait-for-suggestions",
+      "name": "等待搜索建议",
+      "type": "wait",
+      "params": {
+        "duration": 1000,
+        "description": "等待搜索建议出现"
+      }
+    }
+  ]
+}

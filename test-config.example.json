@@ -1,0 +1,29 @@
+{
+  "headless": true,
+  "timeout": 30000,
+  "stopOnFailure": false,
+  "screenshotDir": "./test-screenshots",
+  "screenshotOnSuccess": false,
+  "screenshotFullPage": false,
+  "reportDir": "./test-reports",
+  "generateHtmlReport": true,
+  "verbose": false,
+  "maxRetries": 2,
+  "parallel": false,
+  "parallelCount": 1,
+  "baseUrl": "https://your-app.com",
+  "cookies": [
+    {
+      "name": "session_id",
+      "value": "your-session-token",
+      "domain": "your-app.com"
+    }
+  ],
+  "localStorage": {
+    "theme": "dark",
+    "language": "zh-CN"
+  },
+  "sessionStorage": {
+    "temporary_data": "value"
+  }
+}

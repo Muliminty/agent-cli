@@ -1,0 +1,85 @@
+{
+  "id": "example-login",
+  "name": "用户登录测试示例",
+  "description": "演示用户登录流程的测试套件",
+  "tags": ["login", "authentication", "example"],
+  "steps": [
+    {
+      "id": "navigate-to-login",
+      "name": "导航到登录页面",
+      "type": "navigate",
+      "params": {
+        "url": "https://example.com/login",
+        "waitUntil": "networkidle0",
+        "description": "打开登录页面"
+      }
+    },
+    {
+      "id": "assert-login-form",
+      "name": "验证登录表单存在",
+      "type": "assert",
+      "params": {
+        "assertType": "visible",
+        "selector": "form.login-form",
+        "timeout": 5000,
+        "description": "验证登录表单已加载"
+      }
+    },
+    {
+      "id": "fill-username",
+      "name": "输入用户名",
+      "type": "type",
+      "params": {
+        "selector": "input[name='username']",
+        "text": "testuser@example.com",
+        "clear": true,
+        "delay": 100,
+        "description": "在用户名输入框中输入测试邮箱"
+      }
+    },
+    {
+      "id": "fill-password",
+      "name": "输入密码",
+      "type": "type",
+      "params": {
+        "selector": "input[name='password']",
+        "text": "TestPassword123!",
+        "clear": true,
+        "delay": 100,
+        "description": "在密码输入框中输入测试密码"
+      }
+    },
+    {
+      "id": "click-login-button",
+      "name": "点击登录按钮",
+      "type": "click",
+      "params": {
+        "selector": "button[type='submit']",
+        "waitAfter": 1000,
+        "description": "点击提交按钮进行登录"
+      }
+    },
+    {
+      "id": "assert-login-success",
+      "name": "验证登录成功",
+      "type": "assert",
+      "params": {
+        "assertType": "visible",
+        "selector": ".dashboard-header",
+        "timeout": 10000,
+        "description": "验证登录后跳转到仪表板页面"
+      }
+    },
+    {
+      "id": "assert-welcome-message",
+      "name": "验证欢迎消息",
+      "type": "assert",
+      "params": {
+        "assertType": "text",
+        "selector": ".welcome-message",
+        "expected": "欢迎",
+        "description": "验证页面显示欢迎消息"
+      }
+    }
+  ]
+}

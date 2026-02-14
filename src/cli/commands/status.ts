@@ -21,6 +21,7 @@ import { createLogger } from '../../utils/logger.js'
 import { loadConfig } from '../../config/loader.js'
 import { ProgressTracker } from '../../core/progress/tracker.js'
 import { GitManager } from '../../core/git/manager.js'
+import yaml from 'js-yaml'
 import type { Feature, FeatureList, ProjectState } from '../../types/index.js'
 import type { GitStatus } from '../../core/git/manager.js'
 
@@ -624,9 +625,67 @@ async function outputYamlStatus(
   options: StatusCommandOptions,
   logger: ReturnType<typeof createLogger>
 ): Promise<void> {
-  // 暂时先输出JSON，YAML转换需要额外依赖
-  await outputJsonStatus(progressTracker, options, logger)
-  logger.warn('注意: YAML格式暂未实现，已回退到JSON格式')
+  const projectState = progressTracker.getProjectState()
+  const featureList = progressTracker.getFeatureList()
+  const progressEntries = progressTracker.getProgressEntries()
+
+  // 构建状态对象（与JSON格式相同）
+  const status = {
+    timestamp: new Date().toISOString(),
+    project: {
+      name: projectState.projectName,
+      progressPercentage: projectState.progressPercentage,
+      health: projectState.health,
+      lastUpdated: projectState.lastUpdated.toISOString()
+    },
+    features: {
+      total: featureList.totalCount,
+      completed: featureList.completedCount,
+      inProgress: featureList.inProgressCount,
+      blocked: featureList.blockedCount,
+      list: options.all ? featureList.features.map(f => ({
+        id: f.id,
+        description: f.description,
+        status: f.status,
+        passes: f.passes,
+        priority: f.priority,
+        updatedAt: f.updatedAt.toISOString()
+      })) : undefined
+    },
+    nextFeature: (() => {
+      const next = progressTracker.getNextFeature()
+      return next ? {
+        id: next.id,
+        description: next.description,
+        priority: next.priority
+      } : null
+    })(),
+    ...(options.git ? { git: await getGitStatusJson(progressTracker.config.projectPath) } : {}),
+    ...(options.tests ? {
+      tests: {
+        total: projectState.testResults.length,
+        passed: projectState.testResults.filter(t => t.passed).length,
+        passRate: projectState.healthDetails.testPassRate
+      }
+    } : {}),
+    ...(options.history ? {
+      recentActivities: progressEntries.slice(-20).map(e => ({
+        timestamp: e.timestamp.toISOString(),
+        action: e.action,
+        description: e.description
+      }))
+    } : {})
+  }
+
+  // 输出YAML
+  const yamlOutput = yaml.dump(status, {
+    indent: 2,
+    lineWidth: -1, // 不限制行宽
+    skipInvalid: true,
+    noRefs: true, // 不生成引用
+    sortKeys: false // 保持键的顺序
+  })
+  console.log(yamlOutput)
 }
 
 /**

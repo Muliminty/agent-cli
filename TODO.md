@@ -62,11 +62,11 @@
 ## 第四阶段：测试集成
 
 ### 9. 测试框架
-- [ ] 实现 `src/core/test/puppeteer-runner.ts` - Puppeteer测试运行器
-- [ ] 实现 `src/core/test/test-manager.ts` - 测试管理器
-- [ ] 添加测试结果管理
-- [ ] 实现截图和报告生成
-- [ ] 添加测试环境管理
+- [x] 实现 `src/core/test/puppeteer-runner.ts` - Puppeteer测试运行器 ✓
+- [x] 实现 `src/core/test/test-manager.ts` - 测试管理器 ✓
+- [x] 添加测试结果管理 ✓
+- [x] 实现截图和报告生成 ✓
+- [x] 添加测试环境管理 ✓
 
 ### 10. 端到端测试
 - [ ] 创建示例测试项目
@@ -78,10 +78,10 @@
 ## 第五阶段：完善和优化
 
 ### 11. CLI命令实现
-- [ ] 实现 `src/cli/commands/init.ts` - 初始化命令
-- [ ] 实现 `src/cli/commands/status.ts` - 状态查看命令
-- [ ] 实现 `src/cli/commands/next.ts` - 下一步实现命令
-- [ ] 实现 `src/cli/commands/test.ts` - 测试命令
+- [x] 实现 `src/cli/commands/init.ts` - 初始化命令 ✓
+- [x] 实现 `src/cli/commands/status.ts` - 状态查看命令 ✓
+- [x] 实现 `src/cli/commands/next.ts` - 下一步实现命令 ✓
+- [x] 实现 `src/cli/commands/test.ts` - 测试命令 ✓
 - [ ] 实现 `src/cli/commands/config.ts` - 配置管理命令
 - [ ] 实现 `src/cli/commands/report.ts` - 报告生成命令
 - [ ] 实现 `src/cli/commands/reset.ts` - 重置命令
@@ -164,13 +164,20 @@
 4. [x] `src/config/loader.ts` - 配置加载器 ✓
 5. [x] `src/core/progress/tracker.ts` - 进度跟踪器 ✓
 
-### 下一步优先（第二阶段收尾）
-6. [ ] `src/cli/commands/init.ts` - 初始化命令
-7. [ ] `src/cli/commands/status.ts` - 状态查看命令
-8. [ ] `src/core/agent/initializer.ts` - 初始化智能体
-9. [ ] `src/utils/token-counter.ts` - Token估算器（上下文监控）
-10. [ ] `src/types/config.ts` - 扩展上下文监控配置类型
-11. [ ] `src/config/schema.ts` - 扩展上下文监控配置schema
+### 已完成（第二阶段收尾）
+6. [x] `src/cli/commands/init.ts` - 初始化命令 ✓
+7. [x] `src/cli/commands/status.ts` - 状态查看命令 ✓
+8. [x] `src/core/agent/initializer.ts` - 初始化智能体 ✓
+9. [x] `src/utils/token-counter.ts` - Token估算器（上下文监控） ✓
+10. [x] `src/types/config.ts` - 扩展上下文监控配置类型 ✓
+11. [x] `src/config/schema.ts` - 扩展上下文监控配置schema ✓
+
+### 下一步优先（第三阶段完善）
+12. [ ] `src/cli/commands/config.ts` - 配置管理命令
+13. [ ] `src/cli/commands/report.ts` - 报告生成命令
+14. [ ] `src/cli/commands/reset.ts` - 重置命令
+15. [ ] 集成上下文监控到现有智能体框架中
+16. [ ] 创建示例测试项目
 
 ## 已完成任务 ✅
 
@@ -212,8 +219,8 @@
 ---
 **最后更新**: 2026-02-14
 **总任务数**: 83个
-**已完成**: 40个
-**剩余**: 43个
-**进度**: 48.2%
+**已完成**: 48个
+**剩余**: 35个
+**进度**: 57.8%
 
-**建议下一步**: 实现测试框架 (`src/core/test/puppeteer-runner.ts`)
+**建议下一步**: 完善剩余CLI命令（config、report、reset等）和集成上下文监控

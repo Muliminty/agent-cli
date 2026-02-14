@@ -20,6 +20,7 @@ import * as path from 'path'
 import { createLogger } from '../../utils/logger.js'
 import { loadConfig } from '../../config/loader.js'
 import { AgentRegistry } from '../../core/agent/base.js'
+import { getPromptUtils } from '../../utils/prompt-utils.js'
 import type { AgentContext } from '../../core/agent/base.js'
 import type { Config } from '../../config/schema.js'
 
@@ -167,21 +168,118 @@ async function collectProjectInfo(
   if (useInteractive) {
     logger.info('交互式模式已启用')
 
-    // 如果未提供项目名称，提示输入
-    if (!finalProjectName) {
-      // 这里应该使用交互式提示，但暂时使用默认值
-      finalProjectName = 'my-project'
-      logger.warn('未提供项目名称，使用默认值: my-project')
-    }
+    // 交互式收集项目信息
+    try {
+      // 项目名称
+      if (!finalProjectName) {
+        finalProjectName = await promptText({
+          message: '项目名称',
+          defaultValue: 'my-project',
+          required: true,
+          validate: (value) => {
+            if (!value || value.trim().length === 0) {
+              return '项目名称不能为空'
+            }
+            if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
+              return '项目名称只能包含字母、数字、下划线和连字符'
+            }
+            return true
+          }
+        })
+      }
 
-    // 如果未提供项目路径，构建默认路径
-    if (!finalProjectPath) {
-      finalProjectPath = path.join(process.cwd(), finalProjectName!)
-    }
+      // 项目路径
+      if (!finalProjectPath) {
+        const defaultPath = path.join(process.cwd(), finalProjectName!)
+        finalProjectPath = await promptText({
+          message: '项目路径',
+          defaultValue: defaultPath,
+          required: true,
+          validate: async (value) => {
+            if (!value || value.trim().length === 0) {
+              return '项目路径不能为空'
+            }
+            const resolvedPath = path.resolve(value)
+            const fs = await import('fs-extra')
+            if (await fs.pathExists(resolvedPath)) {
+              const files = await fs.readdir(resolvedPath)
+              if (files.length > 0) {
+                return `路径 ${resolvedPath} 不为空，请选择空目录或使用不同路径`
+              }
+            }
+            return true
+          }
+        })
+      }
 
-    // 如果未提供描述，使用默认描述
-    if (!finalDescription) {
-      finalDescription = `一个基于 ${finalTemplate} 模板的项目`
+      // 项目描述
+      if (!finalDescription) {
+        finalDescription = await promptText({
+          message: '项目描述',
+          defaultValue: `一个基于 ${finalTemplate} 模板的项目`,
+          required: false
+        })
+      }
+
+      // 项目模板
+      const templateChoice = await promptSelect({
+        message: '选择项目模板',
+        choices: [
+          { name: 'Web应用 (React + TypeScript + Vite)', value: 'web-app' },
+          { name: 'API服务 (Node.js + Express + TypeScript)', value: 'api-service' },
+          { name: '库项目 (TypeScript库开发)', value: 'library' }
+        ],
+        defaultValue: finalTemplate
+      })
+      finalTemplate = templateChoice
+
+      // 是否初始化Git仓库
+      if (options.git === undefined) { // 未通过命令行指定
+        finalInitGit = await promptConfirm({
+          message: '初始化Git仓库',
+          defaultValue: true
+        })
+      }
+
+      // 是否创建初始功能列表
+      if (options['skip-features'] === undefined) { // 未通过命令行指定
+        finalCreateFeatureList = await promptConfirm({
+          message: '创建初始功能列表',
+          defaultValue: true
+        })
+      }
+
+      // Git配置（如果初始化Git仓库）
+      if (finalInitGit) {
+        if (!finalGitUserName) {
+          finalGitUserName = await promptText({
+            message: 'Git用户名 (用于初始提交)',
+            defaultValue: '',
+            required: false
+          })
+        }
+
+        if (!finalGitUserEmail) {
+          finalGitUserEmail = await promptText({
+            message: 'Git用户邮箱 (用于初始提交)',
+            defaultValue: '',
+            required: false,
+            validate: (value) => {
+              if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                return '请输入有效的邮箱地址'
+              }
+              return true
+            }
+          })
+        }
+      }
+
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('User force closed')) {
+        logger.warn('用户取消了交互式输入')
+        process.exit(0)
+      }
+      throw error
     }
   } else {
     // 非交互式模式
