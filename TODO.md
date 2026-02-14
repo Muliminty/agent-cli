@@ -100,6 +100,18 @@
 - [ ] 编写API文档
 - [ ] 添加最佳实践指南
 
+### 14. 上下文监控系统
+- [ ] 实现 `src/utils/token-counter.ts` - Token估算器
+- [ ] 实现 `src/core/agent/context-monitor.ts` - 上下文监控智能体
+- [ ] 扩展 `src/types/config.ts` - 添加上下文监控配置类型
+- [ ] 扩展 `src/config/schema.ts` - 添加上下文监控配置schema
+- [ ] 实现 `src/cli/commands/context.ts` - 上下文监控CLI命令
+- [ ] 集成到现有智能体框架中
+- [ ] 添加上下文警告阈值配置（默认80%）
+- [ ] 实现自动总结功能
+- [ ] 添加token使用统计和历史记录
+- [ ] 集成到进度跟踪系统中
+
 ## 测试任务
 
 ### 单元测试
@@ -156,6 +168,9 @@
 6. [ ] `src/cli/commands/init.ts` - 初始化命令
 7. [ ] `src/cli/commands/status.ts` - 状态查看命令
 8. [ ] `src/core/agent/initializer.ts` - 初始化智能体
+9. [ ] `src/utils/token-counter.ts` - Token估算器（上下文监控）
+10. [ ] `src/types/config.ts` - 扩展上下文监控配置类型
+11. [ ] `src/config/schema.ts` - 扩展上下文监控配置schema
 
 ## 已完成任务 ✅
 
@@ -187,9 +202,9 @@
 
 ---
 **最后更新**: 2026-02-14
-**总任务数**: 73个
+**总任务数**: 83个
 **已完成**: 24个
-**剩余**: 49个
-**进度**: 32.9%
+**剩余**: 59个
+**进度**: 28.9%
 
 **建议下一步**: 实现初始化智能体 (`src/core/agent/initializer.ts`)

@@ -129,6 +129,13 @@
 - [ ] `examples/web-app/` - 示例项目
 - [ ] 用户指南和API文档
 
+#### 14. 上下文监控系统
+- [ ] `src/utils/token-counter.ts` - Token估算器
+- [ ] `src/core/agent/context-monitor.ts` - 上下文监控智能体
+- [ ] 扩展配置类型和schema
+- [ ] `src/cli/commands/context.ts` - 上下文监控CLI命令
+- [ ] 集成到智能体框架中
+
 ## 文件结构现状
 
 ```
@@ -235,6 +242,11 @@ agent-cli/
    - 命令行参数解析
    - 选项验证
    - 命令路由
+
+4. **上下文监控基础** (`src/utils/token-counter.ts`)
+   - Token估算器实现
+   - 上下文使用率计算
+   - 预警阈值配置
 
 ### 中优先级（核心功能）
 
