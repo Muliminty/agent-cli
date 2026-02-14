@@ -10,10 +10,10 @@
 - [ ] 添加版本和帮助命令
 
 ### 2. 工具函数模块
-- [ ] 实现 `src/utils/logger.ts` - 日志工具（彩色输出、文件日志）
-- [ ] 实现 `src/utils/file-utils.ts` - 文件操作工具（读写、复制、删除）
-- [ ] 实现 `src/utils/prompt-utils.ts` - 交互式提示工具
-- [ ] 实现 `src/utils/validation.ts` - 数据验证工具
+- [x] 实现 `src/utils/logger.ts` - 日志工具（彩色输出、文件日志） ✓
+- [x] 实现 `src/utils/file-utils.ts` - 文件操作工具（读写、复制、删除） ✓
+- [x] 实现 `src/utils/prompt-utils.ts` - 交互式提示工具 ✓
+- [x] 实现 `src/utils/validation.ts` - 数据验证工具 ✓
 
 ### 3. 配置系统
 - [ ] 实现 `src/config/loader.ts` - 配置文件加载和解析
@@ -38,10 +38,10 @@
 - [x] 添加分支管理功能 ✓
 
 ### 6. 智能体基类
-- [ ] 实现 `src/core/agent/base.ts` - 基础智能体抽象类
-- [ ] 定义智能体通用接口
-- [ ] 实现错误处理和重试机制
-- [ ] 添加状态管理功能
+- [x] 实现 `src/core/agent/base.ts` - 基础智能体抽象类 ✓
+- [x] 定义智能体通用接口 ✓
+- [x] 实现错误处理和重试机制 ✓
+- [x] 添加状态管理功能 ✓
 
 ## 第三阶段：智能体实现
 
@@ -145,11 +145,17 @@
 
 ## 紧急任务（下次继续时建议顺序）
 
+### 已完成（第一阶段基础）
 1. [x] `bin/agent-cli` - CLI入口文件 ✓
 2. [x] `src/cli/index.ts` - CLI框架 ✓
 3. [x] `src/utils/logger.ts` - 日志工具 ✓
 4. [x] `src/config/loader.ts` - 配置加载器 ✓
 5. [x] `src/core/progress/tracker.ts` - 进度跟踪器 ✓
+
+### 下一步优先（第二阶段收尾）
+6. [ ] `src/cli/commands/init.ts` - 初始化命令
+7. [ ] `src/cli/commands/status.ts` - 状态查看命令
+8. [ ] `src/core/agent/initializer.ts` - 初始化智能体
 
 ## 已完成任务 ✅
 
@@ -182,8 +188,8 @@
 ---
 **最后更新**: 2026-02-14
 **总任务数**: 73个
-**已完成**: 21个
-**剩余**: 52个
-**进度**: 28.8%
+**已完成**: 24个
+**剩余**: 49个
+**进度**: 32.9%
 
-**建议下一步**: 实现智能体基类 (`src/core/agent/base.ts`)
+**建议下一步**: 实现初始化智能体 (`src/core/agent/initializer.ts`)
