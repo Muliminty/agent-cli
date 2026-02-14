@@ -7,7 +7,7 @@
 
 ## 当前状态
 **阶段**：第二阶段核心模块（智能体框架和上下文监控完成）
-**进度**：40.0%
+**进度**：42.0%
 **最后更新时间**：2026-02-14
 
 ## 已完成的工作 ✅
@@ -39,6 +39,7 @@
 - `bin/agent-cli` - CLI可执行文件入口 ✓
 - `src/cli/index.ts` - CLI框架和命令路由 ✓
 - `src/utils/logger.ts` - 日志工具（彩色输出、文件日志）✓
+- `src/utils/file-utils.ts` - 文件操作工具（安全的读写、批量操作、模板渲染）✓
 - `src/config/loader.ts` - 配置文件加载和解析 ✓
 - `src/config/defaults.ts` - 默认配置常量 ✓
 - `src/core/progress/tracker.ts` - 进度跟踪器（核心模块）✓
@@ -71,7 +72,7 @@
 
 #### 2. 工具函数模块
 - [x] `src/utils/logger.ts` - 日志工具（彩色输出、文件日志）✓
-- [ ] `src/utils/file-utils.ts` - 文件操作工具
+- [x] `src/utils/file-utils.ts` - 文件操作工具 ✓
 - [ ] `src/utils/prompt-utils.ts` - 交互式提示工具
 - [ ] `src/utils/validation.ts` - 数据验证工具
 
