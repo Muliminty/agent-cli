@@ -92,6 +92,25 @@ export const TestingConfigSchema = z.object({
 
 export type TestingConfig = z.infer<typeof TestingConfigSchema>
 
+// 上下文监控配置
+export const ContextMonitoringConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  warningThreshold: z.number().min(0.5).max(0.95).default(0.8),
+  maxTokens: z.number().min(1000).max(200000).default(131072),
+  autoSummarize: z.boolean().default(true),
+  summaryInterval: z.number().min(1).max(100).default(10),
+  modelSpecificLimits: z.record(z.string(), z.number()).default({
+    'claude-3-5-sonnet': 131072,
+    'claude-3-opus': 131072,
+    'claude-3-haiku': 131072,
+    'gpt-4': 128000,
+    'gpt-4-turbo': 128000,
+    'gpt-3.5-turbo': 16385
+  })
+})
+
+export type ContextMonitoringConfig = z.infer<typeof ContextMonitoringConfigSchema>
+
 // Git配置
 export const GitConfigSchema = z.object({
   autoCommit: z.boolean().default(true),
@@ -120,6 +139,7 @@ export type ProjectConfig = z.infer<typeof ProjectConfigSchema>
 // 智能体配置
 export const AgentConfigSchema = z.object({
   model: AIModelSchema.default('claude-3-5-sonnet'),
+  contextMonitoring: ContextMonitoringConfigSchema.default({}),
   initializer: InitializerConfigSchema.default({}),
   coder: CoderConfigSchema.default({}),
   maxRetries: z.number().min(0).max(10).default(3),
@@ -163,6 +183,21 @@ export const DEFAULT_CONFIG: Config = {
   },
   agent: {
     model: 'claude-3-5-sonnet',
+    contextMonitoring: {
+      enabled: true,
+      warningThreshold: 0.8,
+      maxTokens: 131072,
+      autoSummarize: true,
+      summaryInterval: 10,
+      modelSpecificLimits: {
+        'claude-3-5-sonnet': 131072,
+        'claude-3-opus': 131072,
+        'claude-3-haiku': 131072,
+        'gpt-4': 128000,
+        'gpt-4-turbo': 128000,
+        'gpt-3.5-turbo': 16385
+      }
+    },
     initializer: {
       promptTemplate: 'templates/init-prompt.md',
       maxFeatures: 200,
