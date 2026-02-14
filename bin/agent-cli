@@ -10,7 +10,7 @@
  * 3. 错误处理确保友好的用户反馈
  */
 
-import { main } from '../dist/cli/index.js'
+import { main } from '../dist/index.js'
 
 // 错误处理包装
 async function run() {

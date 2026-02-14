@@ -13,11 +13,8 @@
 import chalk from 'chalk'
 import fs from 'fs-extra'
 import path from 'path'
-import { fileURLToPath } from 'url'
 
-// ES模块的__dirname替代方案
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// ES模块的__dirname替代方案（保留导入以备其他用途）
 
 // 日志级别定义
 export type LogLevel = 'debug' | 'info' | 'success' | 'warn' | 'error'
@@ -48,7 +45,7 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
 }
 
 // 日志级别颜色映射
-const LOG_LEVEL_COLORS: Record<LogLevel, chalk.Chalk> = {
+const LOG_LEVEL_COLORS: Record<LogLevel, any> = {
   debug: chalk.gray,
   info: chalk.blue,
   success: chalk.green,

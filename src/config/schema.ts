@@ -6,6 +6,7 @@
 import { z } from 'zod'
 import { ConfigSchema, DEFAULT_CONFIG } from '../types/config.js'
 
+export type Config = z.infer<typeof ConfigSchema>
 export { ConfigSchema, DEFAULT_CONFIG }
 
 /**

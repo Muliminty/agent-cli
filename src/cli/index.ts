@@ -12,7 +12,8 @@
 import { Command } from 'commander'
 import { createLogger } from '../utils/logger.js'
 import { loadConfig } from '../config/loader.js'
-import { version } from '../../package.json' assert { type: 'json' }
+import pkg from '../../package.json' assert { type: 'json' }
+const { version } = pkg
 
 // 命令模块类型定义
 interface CommandModule {
