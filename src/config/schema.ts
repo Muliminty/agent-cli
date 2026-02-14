@@ -134,6 +134,59 @@ export function generateJsonSchema(): object {
             enum: ['claude-3-5-sonnet', 'claude-3-opus', 'claude-3-haiku', 'gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'],
             default: 'claude-3-5-sonnet'
           },
+          contextMonitoring: {
+            type: 'object',
+            description: 'Context monitoring configuration',
+            properties: {
+              enabled: {
+                type: 'boolean',
+                description: 'Enable context monitoring',
+                default: true
+              },
+              warningThreshold: {
+                type: 'number',
+                description: 'Warning threshold (0.5-0.95)',
+                minimum: 0.5,
+                maximum: 0.95,
+                default: 0.8
+              },
+              maxTokens: {
+                type: 'number',
+                description: 'Maximum tokens limit',
+                minimum: 1000,
+                maximum: 200000,
+                default: 131072
+              },
+              autoSummarize: {
+                type: 'boolean',
+                description: 'Enable auto summarization',
+                default: true
+              },
+              summaryInterval: {
+                type: 'number',
+                description: 'Summary interval (messages)',
+                minimum: 1,
+                maximum: 100,
+                default: 10
+              },
+              modelSpecificLimits: {
+                type: 'object',
+                description: 'Model-specific context limits',
+                additionalProperties: {
+                  type: 'number'
+                },
+                default: {
+                  'claude-3-5-sonnet': 131072,
+                  'claude-3-opus': 131072,
+                  'claude-3-haiku': 131072,
+                  'gpt-4': 128000,
+                  'gpt-4-turbo': 128000,
+                  'gpt-3.5-turbo': 16385
+                }
+              }
+            },
+            default: {}
+          },
           initializer: {
             type: 'object',
             description: 'Initializer agent configuration',
