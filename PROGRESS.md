@@ -60,6 +60,23 @@
 - 实时token使用估算和阈值预警 ✓
 - 会话总结生成和token历史记录 ✓
 
+### 8. CLI命令模块实现（已完成）
+- `src/cli/commands/config.ts` - 配置管理命令 ✓
+  - 支持查看、设置、验证agent-cli配置
+  - 交互式配置向导，JSON/YAML/文本格式输出
+  - 配置验证和错误提示
+- `src/cli/commands/report.ts` - 报告生成命令 ✓
+  - 多类型报告：进度、测试、健康状态、综合报告
+  - 多格式输出：文本、JSON、HTML、Markdown
+  - 详细分析：趋势分析、问题诊断、改进建议
+- `src/cli/commands/reset.ts` - 项目重置命令 ✓
+  - 多级重置选项：进度、功能列表、Git历史、完全重置
+  - 安全保护：默认需要确认，支持备份和恢复
+  - 预览模式：显示将被影响的项目，避免误操作
+- `src/cli/commands/context.ts` - 上下文监控CLI命令 ✓
+  - 上下文使用率检查，Token估算和预警
+  - 集成上下文监控智能体功能
+
 ## 待完成的任务 📋
 
 ### 第一阶段：基础框架（剩余部分）
@@ -68,7 +85,7 @@
 - [x] `src/cli/index.ts` - CLI入口和参数解析 ✓
 - [x] `src/cli/parser.ts` - 命令行参数解析器 ✓
 - [x] `bin/agent-cli` - CLI可执行文件入口 ✓
-- [ ] `src/cli/commands/` - 命令实现目录结构
+- [x] `src/cli/commands/` - 命令实现目录结构 ✓
 
 #### 2. 工具函数模块
 - [x] `src/utils/logger.ts` - 日志工具（彩色输出、文件日志）✓
@@ -129,7 +146,10 @@
 - [ ] `src/cli/commands/status.ts` - 状态查看命令
 - [ ] `src/cli/commands/next.ts` - 下一步实现命令
 - [ ] `src/cli/commands/test.ts` - 测试命令
-- [ ] `src/cli/commands/config.ts` - 配置管理命令
+- [x] `src/cli/commands/config.ts` - 配置管理命令 ✓
+- [x] `src/cli/commands/report.ts` - 报告生成命令 ✓
+- [x] `src/cli/commands/reset.ts` - 重置命令 ✓
+- [x] `src/cli/commands/context.ts` - 上下文监控CLI命令 ✓
 
 #### 12. 模板系统
 - [ ] `templates/init-prompt.md` - 初始化提示词模板
@@ -263,6 +283,12 @@ agent-cli/
    - 预警阈值配置
    - 实时监控和预警系统
 
+5. **CLI命令实现** (`src/cli/commands/config.ts`, `report.ts`, `reset.ts`, `context.ts`) ✓
+   - 配置管理命令 (config) - 支持查看、设置、验证配置
+   - 报告生成命令 (report) - 多格式报告、详细分析、改进建议
+   - 项目重置命令 (reset) - 选择性重置、备份恢复、安全机制
+   - 上下文监控命令 (context) - 上下文使用率检查、Token估算预警
+
 ### 新的高优先级任务（建议接下来完成）
 
 1. **文件操作工具** (`src/utils/file-utils.ts`)
@@ -274,11 +300,6 @@ agent-cli/
    - 命令行参数解析
    - 选项验证
    - 命令路由
-
-3. **上下文监控CLI命令** (`src/cli/commands/context.ts`)
-   - 上下文使用率检查
-   - Token估算和预警
-   - 集成监控智能体
 
 ### 中优先级（核心功能）
 
