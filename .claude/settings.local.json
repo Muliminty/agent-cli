@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run build:*)",
+      "Bash(chmod:*)",
+      "Bash(node:*)",
+      "Bash(find:*)",
+      "Bash(./bin/agent-cli)",
+      "Bash(./bin/agent-cli:*)",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git push:*)",
+      "Bash(tree:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}

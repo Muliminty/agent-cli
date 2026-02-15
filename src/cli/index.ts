@@ -321,6 +321,217 @@ async function loadCommandModules(): Promise<CommandModule[]> {
       }
     })
 
+    // 添加报告生成命令
+    commands.push({
+      command: 'report',
+      description: '生成项目报告 - 进度、测试、健康状态等多维度分析',
+      options: [
+        {
+          flags: '-t, --type <type>',
+          description: '报告类型 (progress, test, health, summary, all)',
+          defaultValue: 'summary'
+        },
+        {
+          flags: '-f, --format <format>',
+          description: '输出格式 (text, json, html, markdown)',
+          defaultValue: 'text'
+        },
+        {
+          flags: '-o, --output <path>',
+          description: '输出文件路径（默认输出到控制台）'
+        },
+        {
+          flags: '-v, --verbose',
+          description: '详细模式'
+        },
+        {
+          flags: '--debug',
+          description: '调试模式'
+        },
+        {
+          flags: '--cwd <path>',
+          description: '设置工作目录'
+        },
+        {
+          flags: '--title <title>',
+          description: '覆盖报告标题'
+        },
+        {
+          flags: '--time-range <range>',
+          description: '时间范围 (格式: YYYY-MM-DD,YYYY-MM-DD)'
+        },
+        {
+          flags: '--features <ids>',
+          description: '包含特定功能ID（逗号分隔）'
+        },
+        {
+          flags: '--tags <tags>',
+          description: '包含特定标签（逗号分隔）'
+        },
+        {
+          flags: '--exclude-completed',
+          description: '不包含已完成的功能'
+        },
+        {
+          flags: '--include-tests',
+          description: '包含详细测试结果'
+        },
+        {
+          flags: '--include-git',
+          description: '包含Git历史'
+        },
+        {
+          flags: '--include-recommendations',
+          description: '包含建议和行动计划'
+        },
+        {
+          flags: '--force',
+          description: '强制覆盖输出文件'
+        }
+      ],
+      action: async (options: any) => {
+        try {
+          // 动态导入处理函数以避免循环依赖
+          const { handleReportCommand } = await import('./commands/report.js')
+          await handleReportCommand(options)
+        } catch (error) {
+          console.error('❌ 执行report命令失败:', error)
+          throw error
+        }
+      }
+    })
+
+    // 添加配置管理命令
+    commands.push({
+      command: 'config',
+      description: '配置管理 - 查看、设置和验证agent-cli配置',
+      options: [
+        {
+          flags: '-g, --get <path>',
+          description: '获取配置值（配置路径，如 agent.model）'
+        },
+        {
+          flags: '-s, --set <path=value>',
+          description: '设置配置值（格式：path=value）'
+        },
+        {
+          flags: '-r, --reset',
+          description: '重置配置到默认值'
+        },
+        {
+          flags: '-l, --list',
+          description: '列出所有配置项'
+        },
+        {
+          flags: '--validate',
+          description: '验证配置'
+        },
+        {
+          flags: '--format <format>',
+          description: '输出格式 (text, json, yaml)',
+          defaultValue: 'text'
+        },
+        {
+          flags: '-v, --verbose',
+          description: '详细模式'
+        },
+        {
+          flags: '--debug',
+          description: '调试模式'
+        },
+        {
+          flags: '--global',
+          description: '操作全局配置（用户级别）'
+        },
+        {
+          flags: '-i, --interactive',
+          description: '交互式模式'
+        },
+        {
+          flags: '--dry-run',
+          description: '不保存更改（仅预览）'
+        }
+      ],
+      action: async (options: any) => {
+        try {
+          // 动态导入处理函数以避免循环依赖
+          const { handleConfigCommand } = await import('./commands/config.js')
+          await handleConfigCommand(options)
+        } catch (error) {
+          console.error('❌ 执行config命令失败:', error)
+          throw error
+        }
+      }
+    })
+
+    // 添加重置命令
+    commands.push({
+      command: 'reset',
+      description: '项目重置 - 安全地重置项目状态、进度、测试结果等',
+      options: [
+        {
+          flags: '-t, --type <type>',
+          description: '重置类型 (progress, features, tests, git, config, all)',
+          defaultValue: 'progress'
+        },
+        {
+          flags: '-f, --force',
+          description: '强制重置（跳过确认）'
+        },
+        {
+          flags: '-b, --backup',
+          description: '创建备份'
+        },
+        {
+          flags: '--backup-dir <path>',
+          description: '备份目录路径',
+          defaultValue: './backups'
+        },
+        {
+          flags: '--dry-run',
+          description: '预览模式（不实际执行）'
+        },
+        {
+          flags: '-i, --interactive',
+          description: '交互式模式'
+        },
+        {
+          flags: '-v, --verbose',
+          description: '详细模式'
+        },
+        {
+          flags: '--debug',
+          description: '调试模式'
+        },
+        {
+          flags: '--cwd <path>',
+          description: '设置工作目录'
+        },
+        {
+          flags: '--keep-files <files>',
+          description: '保留特定文件（逗号分隔）'
+        },
+        {
+          flags: '--reinitialize',
+          description: '重置后重新初始化'
+        },
+        {
+          flags: '--feature-ids <ids>',
+          description: '仅重置特定功能ID（逗号分隔）'
+        }
+      ],
+      action: async (options: any) => {
+        try {
+          // 动态导入处理函数以避免循环依赖
+          const { handleResetCommand } = await import('./commands/reset.js')
+          await handleResetCommand(options)
+        } catch (error) {
+          console.error('❌ 执行reset命令失败:', error)
+          throw error
+        }
+      }
+    })
+
     // 添加下一步命令
     commands.push({
       command: 'next',
@@ -544,6 +755,15 @@ export async function main() {
       console.log('  $ agent-cli test --suites "tests/login.json" --no-headless --debug')
       console.log('  $ agent-cli next')
       console.log('  $ agent-cli next --start --feature feat-123')
+      console.log('  $ agent-cli report --type progress --format html --output ./report.html')
+      console.log('  $ agent-cli report --type summary --format markdown')
+      console.log('  $ agent-cli report --type all --include-tests --include-git')
+      console.log('  $ agent-cli config --list')
+      console.log('  $ agent-cli config --get agent.model')
+      console.log('  $ agent-cli config --set "agent.model=claude-3-opus"')
+      console.log('  $ agent-cli config --reset')
+      console.log('  $ agent-cli reset --dry-run')
+      console.log('  $ agent-cli reset --type features --backup')
       console.log('\n📁 配置文件: agent.config.json')
       console.log('🌐 更多信息: https://github.com/your-repo/agent-cli')
     })

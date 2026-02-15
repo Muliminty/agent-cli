@@ -111,7 +111,7 @@ export function createConfigCommand(): Command {
  * 处理配置命令
  */
 export async function handleConfigCommand(options: ConfigCommandOptions): Promise<void> {
-  const logger = createLogger({ debug: options.debug })
+  const logger = createLogger({ debug: options.debug ?? false })
 
   try {
     logger.title('⚙️  配置管理')
