@@ -15,9 +15,9 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { createLogger } from './logger.js'
 
-// ES模块的__dirname替代方案
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// ES模块的__dirname替代方案（暂时注释以避免Jest测试冲突）
+// const __filename = fileURLToPath(import.meta.url)
+// const __dirname = path.dirname(__filename)
 
 // 日志实例
 const logger = createLogger()

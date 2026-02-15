@@ -12,11 +12,16 @@ export default {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  testPathIgnorePatterns: ['/node_modules/', '/src/types/test.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/src/types/test.ts', '/src/cli/commands/test.ts'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!chalk|ansi-styles|supports-color|has-flag|color-convert|color-name)'
+  ],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   modulePaths: ['<rootDir>/src'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1'
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^(\\.\\./utils/logger)\\.js$': '$1.ts',
+    '^(\\./logger)\\.js$': '$1.ts'
   },
   extensionsToTreatAsEsm: ['.ts'],
   transform: {

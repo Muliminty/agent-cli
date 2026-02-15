@@ -15,7 +15,9 @@
       "Bash(tree:*)",
       "Bash(npm install:*)",
       "Bash(xargs basename:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npm test:*)",
+      "Bash(npx jest:*)"
     ]
   }
 }
