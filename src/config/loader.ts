@@ -24,8 +24,8 @@ import { validateConfig, mergeConfig, ConfigSchema, DEFAULT_CONFIG } from './sch
 import { createLogger } from '../utils/logger.js'
 
 // ES模块的__dirname替代方案
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// var __filename = fileURLToPath(import.meta.url) // 注释掉，在测试环境中会导致问题
+// var __dirname = path.dirname(__filename) // 注释掉，在测试环境中会导致问题
 
 // 日志实例
 const logger = createLogger()

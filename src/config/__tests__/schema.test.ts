@@ -83,23 +83,21 @@ describe('配置schema验证', () => {
 })
 
 describe('配置schema结构', () => {
-  // 暂时注释，DEFAULT_CONFIG验证有问题需要调查
-  // test('ConfigSchema应该正确解析默认配置', () => {
-  //   const result = ConfigSchema.parse(DEFAULT_CONFIG)
-  //   expect(result).toEqual(DEFAULT_CONFIG)
-  // })
+  test('ConfigSchema应该正确解析默认配置', () => {
+    const result = ConfigSchema.parse(DEFAULT_CONFIG)
+    expect(result).toEqual(DEFAULT_CONFIG)
+  })
 
   test('ConfigSchema应该要求必需字段', () => {
     const incompleteConfig = {}
     expect(() => ConfigSchema.parse(incompleteConfig)).toThrow()
   })
 
-  // 暂时注释，DEFAULT_CONFIG导入有问题需要调查
-  // test('DEFAULT_CONFIG应该满足最小描述长度要求', () => {
-  //   // 检查DEFAULT_CONFIG.project.description长度
-  //   console.log('DEFAULT_CONFIG description:', DEFAULT_CONFIG.project.description)
-  //   console.log('DEFAULT_CONFIG description length:', DEFAULT_CONFIG.project.description.length)
-  //   console.log('Full DEFAULT_CONFIG:', JSON.stringify(DEFAULT_CONFIG, null, 2))
-  //   expect(DEFAULT_CONFIG.project.description.length).toBeGreaterThanOrEqual(10)
-  // })
+  test('DEFAULT_CONFIG应该满足最小描述长度要求', () => {
+    // 检查DEFAULT_CONFIG.project.description长度
+    console.log('DEFAULT_CONFIG description:', DEFAULT_CONFIG.project.description)
+    console.log('DEFAULT_CONFIG description length:', DEFAULT_CONFIG.project.description.length)
+    console.log('Full DEFAULT_CONFIG:', JSON.stringify(DEFAULT_CONFIG, null, 2))
+    expect(DEFAULT_CONFIG.project.description.length).toBeGreaterThanOrEqual(10)
+  })
 })

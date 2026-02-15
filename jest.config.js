@@ -23,7 +23,8 @@ export default {
     '^(\\.\\./utils/logger)\\.js$': '$1.ts',
     '^(\\./logger)\\.js$': '$1.ts',
     '^(\\.\\./types/config)\\.js$': '$1.ts',
-    '^(\\.\\./types/.+)\\.js$': '$1.ts'
+    '^(\\.\\./types/.+)\\.js$': '$1.ts',
+    '^(\\./schema)\\.js$': '$1.ts'
   },
   extensionsToTreatAsEsm: ['.ts'],
   transform: {

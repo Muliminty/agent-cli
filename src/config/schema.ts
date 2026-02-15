@@ -38,7 +38,8 @@ export function validateConfig(config: unknown): z.infer<typeof ConfigSchema> {
  * @returns 合并后的完整配置
  */
 export function mergeConfig(userConfig: Partial<z.infer<typeof ConfigSchema>>): z.infer<typeof ConfigSchema> {
-  const merged = { ...DEFAULT_CONFIG }
+  // 深拷贝默认配置，避免污染原始DEFAULT_CONFIG
+  const merged = JSON.parse(JSON.stringify(DEFAULT_CONFIG))
 
   // 深度合并配置
   const deepMerge = (target: any, source: any) => {
