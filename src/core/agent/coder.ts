@@ -922,3 +922,13 @@ export default {
   CoderAgent,
   CoderAgentFactory
 }
+
+// 自动注册工厂（当模块被加载时）
+import { AgentRegistry } from './base.js'
+
+try {
+  AgentRegistry.register(CoderAgentFactory)
+  console.debug(`✅ 智能体工厂已注册: ${CoderAgentFactory.type}`)
+} catch (error) {
+  console.warn(`⚠️  智能体工厂注册失败: ${error instanceof Error ? error.message : String(error)}`)
+}

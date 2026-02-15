@@ -12,7 +12,8 @@
 
 import { BaseAgent, AgentContext, AgentResult, AgentConfig } from './base.js'
 import { TokenCounter, type AIMessage, type TokenEstimation } from '../../utils/token-counter.js'
-import { createLogger } from '../../utils/logger.js'
+import { ProgressTracker } from '../progress/tracker.js'
+import type { ProgressEntry } from '../../types/project.js'
 
 // 上下文监控事件类型
 export type ContextMonitorEvent =
@@ -67,6 +68,7 @@ export class ContextMonitorAgent extends BaseAgent {
   private lastSummaryTime = 0
   private messageCount = 0
   private sessionId: string
+  private progressTracker: ProgressTracker | null = null
 
   constructor(context: AgentContext, config: ContextMonitorConfig = {}) {
     // 合并配置
@@ -94,6 +96,15 @@ export class ContextMonitorAgent extends BaseAgent {
    */
   protected async onInitialize(): Promise<void> {
     this.logger.info('上下文监控智能体初始化开始')
+
+    // 初始化进度跟踪器
+    this.progressTracker = new ProgressTracker({
+      projectPath: this.context.projectPath,
+      autoSave: true,
+      verbose: this.config.verbose
+    })
+
+    await this.progressTracker.initialize()
 
     // 加载历史记录（如果有）
     await this.loadTokenHistory()
@@ -126,7 +137,7 @@ export class ContextMonitorAgent extends BaseAgent {
       )
 
       // 2. 记录token使用
-      const usageRecord = this.recordTokenUsage(tokenEstimation, messages.length, model)
+      void await this.recordTokenUsage(tokenEstimation, messages.length, model)
 
       // 3. 检查警告阈值
       const warnings: string[] = []
@@ -154,7 +165,7 @@ export class ContextMonitorAgent extends BaseAgent {
         tokenHistory: this.getRecentTokenHistory(20),
         warnings,
         recommendations,
-        generatedSummary
+        ...(generatedSummary ? { generatedSummary } : {})
       }
 
       this.logger.debug(`上下文监控完成，使用率: ${(tokenEstimation.utilization * 100).toFixed(1)}%`)
@@ -195,6 +206,7 @@ export class ContextMonitorAgent extends BaseAgent {
       this.tokenHistory = []
       this.warningTriggered = false
       this.messageCount = 0
+      this.progressTracker = null
 
       this.logger.completeTask('清理上下文监控资源')
     } catch (error) {
@@ -206,7 +218,7 @@ export class ContextMonitorAgent extends BaseAgent {
   /**
    * 记录token使用
    */
-  private recordTokenUsage(estimation: TokenEstimation, messageCount: number, model: string): TokenUsageRecord {
+  private async recordTokenUsage(estimation: TokenEstimation, messageCount: number, model: string): Promise<TokenUsageRecord> {
     const record: TokenUsageRecord = {
       timestamp: new Date(),
       inputTokens: estimation.inputTokens,
@@ -233,8 +245,8 @@ export class ContextMonitorAgent extends BaseAgent {
 
     this.logger.debug(`记录token使用: ${record.totalTokens} tokens (${(record.utilization * 100).toFixed(1)}%)`)
 
-    // 触发事件
-    this.recordProgress({
+    // 触发事件并保存到进度跟踪器
+    await this.saveProgressEntry({
       action: 'feature_started',
       description: `Token使用记录: ${record.totalTokens} tokens`,
       details: record
@@ -253,7 +265,6 @@ export class ContextMonitorAgent extends BaseAgent {
     const warnings: string[] = []
     const recommendations: string[] = []
 
-    const percentage = (estimation.utilization * 100).toFixed(1)
     const modelLimit = TokenCounter.getModelContextLimit(model)
 
     // 生成警告消息
@@ -264,7 +275,7 @@ export class ContextMonitorAgent extends BaseAgent {
     recommendations.push(...this.generateRecommendations(estimation, model))
 
     // 记录到进度文件
-    await this.recordProgress({
+    await this.saveProgressEntry({
       action: 'error_occurred',
       description: '上下文长度接近限制',
       details: {
@@ -296,7 +307,7 @@ export class ContextMonitorAgent extends BaseAgent {
   /**
    * 生成建议
    */
-  private generateRecommendations(estimation: TokenEstimation, model: string): string[] {
+  private generateRecommendations(estimation: TokenEstimation, _model: string): string[] {
     const recommendations: string[] = []
 
     if (estimation.utilization >= 1.0) {
@@ -373,7 +384,7 @@ export class ContextMonitorAgent extends BaseAgent {
       const summaryText = JSON.stringify(summary, null, 2)
 
       // 记录总结
-      await this.recordProgress({
+      await this.saveProgressEntry({
         action: 'feature_completed',
         description: '自动生成会话总结',
         details: summary
@@ -465,6 +476,26 @@ export class ContextMonitorAgent extends BaseAgent {
   }
 
   /**
+   * 保存进度条目到进度跟踪器
+   */
+  private async saveProgressEntry(entry: Omit<ProgressEntry, 'timestamp'>): Promise<void> {
+    // 调用父类的记录进度方法（触发事件和日志）
+    this.recordProgress(entry)
+
+    // 保存到进度跟踪器文件
+    if (this.progressTracker) {
+      try {
+        await this.progressTracker.addProgressEntry(entry)
+        this.logger.debug(`进度条目已保存到跟踪器: ${entry.action} - ${entry.description}`)
+      } catch (error) {
+        this.logger.warn(`保存进度条目到跟踪器失败: ${error}`)
+      }
+    } else {
+      this.logger.warn('进度跟踪器未初始化，无法保存进度条目')
+    }
+  }
+
+  /**
    * 更新进度跟踪
    */
   private async updateProgressTracking(estimation: TokenEstimation, warnings: string[]): Promise<void> {
@@ -475,7 +506,7 @@ export class ContextMonitorAgent extends BaseAgent {
     }
 
     // 记录到智能体进度
-    this.recordProgress({
+    await this.saveProgressEntry({
       action: 'feature_started',
       description: `上下文监控更新，使用率: ${(estimation.utilization * 100).toFixed(1)}%`,
       details: {
@@ -496,11 +527,12 @@ export class ContextMonitorAgent extends BaseAgent {
     }
 
     const stats = this.calculateTokenStatistics()
+    const firstRecord = this.tokenHistory[0]!
     const report = {
       sessionId: this.sessionId,
-      sessionStartTime: this.tokenHistory[0].timestamp,
+      sessionStartTime: firstRecord.timestamp,
       sessionEndTime: new Date(),
-      durationMs: Date.now() - this.tokenHistory[0].timestamp.getTime(),
+      durationMs: Date.now() - firstRecord.timestamp.getTime(),
       totalMessages: this.messageCount,
       tokenStatistics: stats,
       warningsTriggered: this.warningTriggered ? 1 : 0,
@@ -518,7 +550,7 @@ export class ContextMonitorAgent extends BaseAgent {
     this.logger.item('总结生成', `${report.summariesGenerated} 次`)
 
     // 记录到进度文件
-    await this.recordProgress({
+    await this.saveProgressEntry({
       action: 'feature_completed',
       description: '上下文监控最终报告',
       details: report
@@ -539,13 +571,17 @@ export class ContextMonitorAgent extends BaseAgent {
     // 从上下文配置中获取，或使用默认值
     const contextConfig = this.context.config.agent?.contextMonitoring || {}
 
-    return {
-      enabled: contextConfig.enabled ?? true,
-      warningThreshold: contextConfig.warningThreshold ?? 0.8,
-      autoSummarize: contextConfig.autoSummarize ?? true,
-      summaryInterval: contextConfig.summaryInterval ?? 10,
+    const defaultConfig: ContextMonitorConfig = {
+      enabled: true,
+      warningThreshold: 0.8,
+      autoSummarize: true,
+      summaryInterval: 10,
       maxHistoryRecords: 100,
-      model: this.context.config.agent?.model || 'claude-3-5-sonnet',
+      model: this.context.config.agent?.model || 'claude-3-5-sonnet'
+    }
+
+    return {
+      ...defaultConfig,
       ...contextConfig
     }
   }
@@ -616,8 +652,42 @@ export function createContextMonitorAgent(context: AgentContext, config?: Contex
   return new ContextMonitorAgent(context, config)
 }
 
+/**
+ * 上下文监控智能体工厂
+ */
+export class ContextMonitorAgentFactory {
+  static readonly type = 'context-monitor'
+  static readonly description = '上下文监控智能体，负责监控token使用和提供预警'
+
+  static create(context: AgentContext, config?: Partial<AgentConfig>): ContextMonitorAgent {
+    // 从上下文中提取监控配置
+    const monitorConfig: ContextMonitorConfig = {
+      enabled: context.config.agent?.contextMonitoring?.enabled ?? true,
+      warningThreshold: context.config.agent?.contextMonitoring?.warningThreshold ?? 0.8,
+      autoSummarize: context.config.agent?.contextMonitoring?.autoSummarize ?? true,
+      summaryInterval: context.config.agent?.contextMonitoring?.summaryInterval ?? 10,
+      model: context.config.agent?.model || 'claude-3-5-sonnet',
+      ...(context.userData?.['contextMonitorOptions'] || {}),
+      ...(config as ContextMonitorConfig || {})
+    }
+
+    return new ContextMonitorAgent(context, monitorConfig)
+  }
+}
+
 // 默认导出
 export default {
   ContextMonitorAgent,
-  createContextMonitorAgent
+  createContextMonitorAgent,
+  ContextMonitorAgentFactory
+}
+
+// 自动注册工厂（当模块被加载时）
+import { AgentRegistry } from './base.js'
+
+try {
+  AgentRegistry.register(ContextMonitorAgentFactory)
+  console.debug(`✅ 智能体工厂已注册: ${ContextMonitorAgentFactory.type}`)
+} catch (error) {
+  console.warn(`⚠️  智能体工厂注册失败: ${error instanceof Error ? error.message : String(error)}`)
 }
