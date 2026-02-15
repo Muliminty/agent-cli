@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo应用 - Agent-CLI测试示例</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-tasks"></i> Todo应用</h1>
+            <p class="subtitle">Agent-CLI测试框架示例项目</p>
+        </header>
+
+        <main class="main-content">
+            <!-- 添加待办事项区域 -->
+            <section class="add-todo-section">
+                <div class="input-group">
+                    <input type="text" id="todo-input" placeholder="输入待办事项..." maxlength="100">
+                    <button id="add-btn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 添加
+                    </button>
+                </div>
+                <div class="hint">
+                    <i class="fas fa-info-circle"></i> 按Enter键或点击添加按钮添加待办事项
+                </div>
+            </section>
+
+            <!-- 过滤选项区域 -->
+            <section class="filter-section">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">
+                        <i class="fas fa-list"></i> 全部
+                    </button>
+                    <button class="filter-btn" data-filter="active">
+                        <i class="fas fa-clock"></i> 进行中
+                    </button>
+                    <button class="filter-btn" data-filter="completed">
+                        <i class="fas fa-check-circle"></i> 已完成
+                    </button>
+                </div>
+                <div class="actions">
+                    <button id="clear-completed" class="btn btn-secondary">
+                        <i class="fas fa-trash"></i> 清除已完成
+                    </button>
+                    <button id="clear-all" class="btn btn-danger">
+                        <i class="fas fa-broom"></i> 清除全部
+                    </button>
+                </div>
+            </section>
+
+            <!-- 待办事项列表区域 -->
+            <section class="todo-list-section">
+                <h2><i class="fas fa-clipboard-list"></i> 待办事项列表</h2>
+                <div id="todo-list" class="todo-list">
+                    <!-- 待办事项将通过JavaScript动态生成 -->
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard"></i>
+                        <p>暂无待办事项</p>
+                        <p class="empty-hint">添加你的第一个待办事项开始吧！</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 统计信息区域 -->
+            <section class="stats-section">
+                <div class="stats-card">
+                    <div class="stat-item">
+                        <span class="stat-label">总计</span>
+                        <span id="total-count" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">进行中</span>
+                        <span id="active-count" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">已完成</span>
+                        <span id="completed-count" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">完成率</span>
+                        <span id="completion-rate" class="stat-value">0%</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>© 2026 Agent-CLI测试示例项目 | 使用 <code>agent-cli test</code> 运行自动化测试</p>
+            <div class="footer-links">
+                <a href="#" id="toggle-theme" class="footer-link">
+                    <i class="fas fa-moon"></i> 切换主题
+                </a>
+                <a href="#" id="export-data" class="footer-link">
+                    <i class="fas fa-download"></i> 导出数据
+                </a>
+                <a href="#" id="import-data" class="footer-link">
+                    <i class="fas fa-upload"></i> 导入数据
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 确认对话框 -->
+    <div id="confirm-dialog" class="modal">
+        <div class="modal-content">
+            <h3 id="confirm-title">确认操作</h3>
+            <p id="confirm-message">你确定要执行此操作吗？</p>
+            <div class="modal-actions">
+                <button id="confirm-cancel" class="btn btn-secondary">取消</button>
+                <button id="confirm-ok" class="btn btn-danger">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入对话框 -->
+    <div id="import-dialog" class="modal">
+        <div class="modal-content">
+            <h3>导入待办事项</h3>
+            <textarea id="import-textarea" placeholder="粘贴JSON格式的待办事项数据..."></textarea>
+            <div class="modal-actions">
+                <button id="import-cancel" class="btn btn-secondary">取消</button>
+                <button id="import-ok" class="btn btn-primary">导入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知区域 -->
+    <div id="notification" class="notification">
+        <span id="notification-message"></span>
+        <button id="notification-close" class="notification-close">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

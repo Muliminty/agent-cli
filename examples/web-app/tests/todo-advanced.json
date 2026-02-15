@@ -1,0 +1,489 @@
+{
+  "name": "todo-advanced",
+  "description": "Todo应用高级功能测试 - 验证批量操作、数据持久化、边界条件等",
+  "version": "1.0.0",
+  "timeout": 90000,
+  "tests": [
+    {
+      "name": "test-bulk-add-todos",
+      "description": "验证批量添加待办事项功能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "清空现有数据",
+          "action": "async (page) => { await page.evaluate(() => localStorage.clear()); await page.reload(); }"
+        },
+        {
+          "type": "custom",
+          "name": "批量添加10个待办事项",
+          "action": "async (page) => { for (let i = 1; i <= 10; i++) { await page.type('#todo-input', `批量待办事项 ${i}`); await page.click('#add-btn'); await page.waitForTimeout(200); } }"
+        },
+        {
+          "type": "wait",
+          "timeout": 3000,
+          "name": "等待批量添加完成"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 10,
+          "name": "验证成功添加10个待办事项"
+        },
+        {
+          "type": "assert",
+          "selector": "#total-count",
+          "assertion": "text",
+          "expected": "10",
+          "name": "验证总计数量正确"
+        },
+        {
+          "type": "custom",
+          "name": "验证本地存储数据",
+          "action": "async (page) => { const data = await page.evaluate(() => localStorage.getItem('todo-app-data')); const todos = JSON.parse(data); return todos.length === 10 && todos.every((t, i) => t.text === `批量待办事项 ${10 - i}`); }"
+        }
+      ]
+    },
+    {
+      "name": "test-bulk-toggle-todos",
+      "description": "验证批量切换待办事项状态",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "准备测试数据",
+          "action": "async (page) => { await page.evaluate(() => { const todos = []; for (let i = 1; i <= 5; i++) { todos.push({ id: i, text: `待办事项 ${i}`, completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); } localStorage.setItem('todo-app-data', JSON.stringify(todos)); }); await page.reload(); }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 5,
+          "name": "验证初始数量"
+        },
+        {
+          "type": "assert",
+          "selector": "#completed-count",
+          "assertion": "text",
+          "expected": "0",
+          "name": "验证初始完成数量为0"
+        },
+        {
+          "type": "custom",
+          "name": "批量标记前3个为完成",
+          "action": "async (page) => { const checkboxes = await page.$$('.todo-checkbox'); for (let i = 0; i < 3; i++) { await checkboxes[i].click(); await page.waitForTimeout(200); } }"
+        },
+        {
+          "type": "wait",
+          "timeout": 2000,
+          "name": "等待状态更新"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item.completed",
+          "assertion": "count",
+          "expected": 3,
+          "name": "验证3个事项标记为完成"
+        },
+        {
+          "type": "assert",
+          "selector": "#completed-count",
+          "assertion": "text",
+          "expected": "3",
+          "name": "验证完成数量更新"
+        },
+        {
+          "type": "assert",
+          "selector": "#completion-rate",
+          "assertion": "text",
+          "expected": "60%",
+          "name": "验证完成率正确计算"
+        }
+      ]
+    },
+    {
+      "name": "test-clear-completed",
+      "description": "验证清除已完成功能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "准备测试数据",
+          "action": "async (page) => { await page.evaluate(() => { const todos = [ { id: 1, text: '进行中1', completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, { id: 2, text: '进行中2', completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, { id: 3, text: '已完成1', completed: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, { id: 4, text: '已完成2', completed: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, { id: 5, text: '已完成3', completed: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } ]; localStorage.setItem('todo-app-data', JSON.stringify(todos)); }); await page.reload(); }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 5,
+          "name": "验证初始数量"
+        },
+        {
+          "type": "assert",
+          "selector": "#completed-count",
+          "assertion": "text",
+          "expected": "3",
+          "name": "验证3个已完成事项"
+        },
+        {
+          "type": "click",
+          "selector": "#clear-completed",
+          "name": "点击清除已完成按钮"
+        },
+        {
+          "type": "wait",
+          "selector": "#confirm-dialog",
+          "timeout": 3000,
+          "name": "等待确认对话框出现"
+        },
+        {
+          "type": "click",
+          "selector": "#confirm-ok",
+          "name": "点击确认按钮"
+        },
+        {
+          "type": "wait",
+          "timeout": 2000,
+          "name": "等待清除完成"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 2,
+          "name": "验证只剩余2个进行中事项"
+        },
+        {
+          "type": "assert",
+          "selector": "#completed-count",
+          "assertion": "text",
+          "expected": "0",
+          "name": "验证完成数量清零"
+        },
+        {
+          "type": "assert",
+          "selector": "#completion-rate",
+          "assertion": "text",
+          "expected": "0%",
+          "name": "验证完成率清零"
+        },
+        {
+          "type": "custom",
+          "name": "验证本地存储",
+          "action": "async (page) => { const data = await page.evaluate(() => localStorage.getItem('todo-app-data')); const todos = JSON.parse(data); return todos.length === 2 && todos.every(t => !t.completed); }"
+        }
+      ]
+    },
+    {
+      "name": "test-clear-all",
+      "description": "验证清除全部功能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "准备测试数据",
+          "action": "async (page) => { await page.evaluate(() => { const todos = []; for (let i = 1; i <= 8; i++) { todos.push({ id: i, text: `测试事项 ${i}`, completed: i % 2 === 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); } localStorage.setItem('todo-app-data', JSON.stringify(todos)); }); await page.reload(); }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 8,
+          "name": "验证初始数量"
+        },
+        {
+          "type": "click",
+          "selector": "#clear-all",
+          "name": "点击清除全部按钮"
+        },
+        {
+          "type": "wait",
+          "selector": "#confirm-dialog",
+          "timeout": 3000,
+          "name": "等待确认对话框出现"
+        },
+        {
+          "type": "assert",
+          "selector": "#confirm-title",
+          "assertion": "text",
+          "expected": "清除全部",
+          "name": "验证确认对话框标题"
+        },
+        {
+          "type": "click",
+          "selector": "#confirm-ok",
+          "name": "点击确认按钮"
+        },
+        {
+          "type": "wait",
+          "timeout": 2000,
+          "name": "等待清除完成"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 0,
+          "name": "验证所有事项已清除"
+        },
+        {
+          "type": "assert",
+          "selector": ".empty-state",
+          "assertion": "visible",
+          "name": "验证空状态显示"
+        },
+        {
+          "type": "assert",
+          "selector": "#total-count",
+          "assertion": "text",
+          "expected": "0",
+          "name": "验证总计数量清零"
+        },
+        {
+          "type": "custom",
+          "name": "验证本地存储为空",
+          "action": "async (page) => { const data = await page.evaluate(() => localStorage.getItem('todo-app-data')); return !data || JSON.parse(data).length === 0; }"
+        }
+      ]
+    },
+    {
+      "name": "test-data-persistence",
+      "description": "验证数据持久化功能 - 刷新页面后数据保持不变",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "清空并添加测试数据",
+          "action": "async (page) => { await page.evaluate(() => localStorage.clear()); }"
+        },
+        {
+          "type": "type",
+          "selector": "#todo-input",
+          "text": "持久化测试事项1",
+          "name": "输入第一个事项"
+        },
+        {
+          "type": "click",
+          "selector": "#add-btn",
+          "name": "添加第一个事项"
+        },
+        {
+          "type": "wait",
+          "timeout": 500,
+          "name": "等待添加完成"
+        },
+        {
+          "type": "type",
+          "selector": "#todo-input",
+          "text": "持久化测试事项2",
+          "name": "输入第二个事项"
+        },
+        {
+          "type": "click",
+          "selector": "#add-btn",
+          "name": "添加第二个事项"
+        },
+        {
+          "type": "wait",
+          "timeout": 500,
+          "name": "等待添加完成"
+        },
+        {
+          "type": "click",
+          "selector": ".todo-checkbox:first-child",
+          "name": "标记第一个事项为完成"
+        },
+        {
+          "type": "wait",
+          "timeout": 500,
+          "name": "等待状态更新"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 2,
+          "name": "验证添加成功"
+        },
+        {
+          "type": "assert",
+          "selector": "#completed-count",
+          "assertion": "text",
+          "expected": "1",
+          "name": "验证完成数量"
+        },
+        {
+          "type": "custom",
+          "name": "刷新页面",
+          "action": "async (page) => { await page.reload(); await page.waitForSelector('.todo-list'); }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 2,
+          "name": "验证刷新后数量不变"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item.completed",
+          "assertion": "count",
+          "expected": 1,
+          "name": "验证完成状态保持"
+        },
+        {
+          "type": "assert",
+          "selector": "#completed-count",
+          "assertion": "text",
+          "expected": "1",
+          "name": "验证完成数量保持"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-text:first-child",
+          "assertion": "text",
+          "expected": "持久化测试事项2",
+          "name": "验证事项文本保持"
+        }
+      ]
+    },
+    {
+      "name": "test-edit-todo",
+      "description": "验证编辑待办事项功能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "准备测试数据",
+          "action": "async (page) => { await page.evaluate(() => { localStorage.setItem('todo-app-data', JSON.stringify([{ id: 1, text: '原始文本', completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])); }); await page.reload(); }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-text",
+          "assertion": "text",
+          "expected": "原始文本",
+          "name": "验证初始文本"
+        },
+        {
+          "type": "click",
+          "selector": ".todo-action-btn.edit",
+          "name": "点击编辑按钮"
+        },
+        {
+          "type": "custom",
+          "name": "模拟prompt输入",
+          "action": "async (page) => { page.on('dialog', async dialog => { await dialog.accept('编辑后的文本'); }); }"
+        },
+        {
+          "type": "wait",
+          "timeout": 2000,
+          "name": "等待编辑完成"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-text",
+          "assertion": "text",
+          "expected": "编辑后的文本",
+          "name": "验证文本已更新"
+        },
+        {
+          "type": "custom",
+          "name": "验证取消编辑",
+          "action": "async (page) => { page.removeAllListeners('dialog'); page.on('dialog', async dialog => { await dialog.dismiss(); }); await page.click('.todo-action-btn.edit'); await page.waitForTimeout(1000); const text = await page.$eval('.todo-text', el => el.textContent); return text === '编辑后的文本'; }"
+        }
+      ]
+    },
+    {
+      "name": "test-theme-toggle",
+      "description": "验证主题切换功能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "清除主题设置",
+          "action": "async (page) => { await page.evaluate(() => localStorage.removeItem('todo-theme')); await page.reload(); }"
+        },
+        {
+          "type": "assert",
+          "selector": "body",
+          "assertion": "hidden",
+          "expected": "dark-mode",
+          "name": "验证初始为浅色主题"
+        },
+        {
+          "type": "click",
+          "selector": "#toggle-theme",
+          "name": "点击切换主题按钮"
+        },
+        {
+          "type": "wait",
+          "timeout": 1000,
+          "name": "等待主题切换"
+        },
+        {
+          "type": "assert",
+          "selector": "body",
+          "assertion": "visible",
+          "expected": "dark-mode",
+          "name": "验证切换到深色主题"
+        },
+        {
+          "type": "custom",
+          "name": "验证本地存储",
+          "action": "async (page) => { const theme = await page.evaluate(() => localStorage.getItem('todo-theme')); return theme === 'dark'; }"
+        },
+        {
+          "type": "custom",
+          "name": "刷新页面验证主题保持",
+          "action": "async (page) => { await page.reload(); await page.waitForSelector('body'); const hasDarkClass = await page.evaluate(() => document.body.classList.contains('dark-mode')); return hasDarkClass; }"
+        },
+        {
+          "type": "click",
+          "selector": "#toggle-theme",
+          "name": "再次点击切换主题按钮"
+        },
+        {
+          "type": "wait",
+          "timeout": 1000,
+          "name": "等待主题切换"
+        },
+        {
+          "type": "assert",
+          "selector": "body",
+          "assertion": "hidden",
+          "expected": "dark-mode",
+          "name": "验证切换回浅色主题"
+        }
+      ]
+    }
+  ]
+}

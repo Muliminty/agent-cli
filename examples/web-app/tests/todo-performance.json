@@ -1,0 +1,248 @@
+{
+  "name": "todo-performance",
+  "description": "Todo应用性能测试 - 验证大量数据加载、操作响应时间等性能指标",
+  "version": "1.0.0",
+  "timeout": 120000,
+  "tests": [
+    {
+      "name": "test-large-data-load",
+      "description": "验证大量数据加载性能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "生成并加载1000个待办事项",
+          "action": "async (page) => { const startTime = Date.now(); await page.evaluate(() => { const todos = []; for (let i = 1; i <= 1000; i++) { todos.push({ id: i, text: `性能测试待办事项 ${i}`, completed: i % 3 === 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); } localStorage.setItem('todo-app-data', JSON.stringify(todos)); }); await page.reload(); const loadTime = Date.now() - startTime; console.log(`加载1000个待办事项耗时: ${loadTime}ms`); return loadTime < 5000; }"
+        },
+        {
+          "type": "wait",
+          "selector": ".todo-item",
+          "timeout": 10000,
+          "name": "等待列表渲染"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 1000,
+          "name": "验证成功加载1000个事项"
+        },
+        {
+          "type": "assert",
+          "selector": "#total-count",
+          "assertion": "text",
+          "expected": "1000",
+          "name": "验证总计数量正确"
+        },
+        {
+          "type": "custom",
+          "name": "验证滚动性能",
+          "action": "async (page) => { const startTime = Date.now(); await page.evaluate(() => { window.scrollTo(0, document.body.scrollHeight); }); await page.waitForTimeout(500); const scrollTime = Date.now() - startTime; console.log(`滚动到底部耗时: ${scrollTime}ms`); return scrollTime < 1000; }"
+        },
+        {
+          "type": "custom",
+          "name": "测量过滤操作性能",
+          "action": "async (page) => { const startTime = Date.now(); await page.click('.filter-btn[data-filter=\"completed\"]'); await page.waitForSelector('.todo-item', { timeout: 5000 }); const filterTime = Date.now() - startTime; const completedCount = await page.$$eval('.todo-item', items => items.length); console.log(`过滤到已完成事项耗时: ${filterTime}ms, 数量: ${completedCount}`); return filterTime < 3000 && completedCount > 0; }"
+        }
+      ]
+    },
+    {
+      "name": "test-add-performance",
+      "description": "验证添加操作的性能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "清空现有数据",
+          "action": "async (page) => { await page.evaluate(() => localStorage.clear()); await page.reload(); }"
+        },
+        {
+          "type": "custom",
+          "name": "测量连续添加100个事项的性能",
+          "action": "async (page) => { const times = []; for (let i = 1; i <= 100; i++) { const startTime = Date.now(); await page.type('#todo-input', `性能测试 ${i}`); await page.click('#add-btn'); await page.waitForTimeout(50); // 短暂等待确保DOM更新 const endTime = Date.now(); times.push(endTime - startTime); } const avgTime = times.reduce((a, b) => a + b, 0) / times.length; const maxTime = Math.max(...times); const minTime = Math.min(...times); console.log(`添加100个事项性能统计:`); console.log(`平均耗时: ${avgTime.toFixed(2)}ms`); console.log(`最大耗时: ${maxTime}ms`); console.log(`最小耗时: ${minTime}ms`); return avgTime < 200 && maxTime < 500; }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 100,
+          "name": "验证成功添加100个事项"
+        },
+        {
+          "type": "custom",
+          "name": "验证内存使用",
+          "action": "async (page) => { const memory = await page.evaluate(() => { if (window.performance && window.performance.memory) { return { usedJSHeapSize: window.performance.memory.usedJSHeapSize, totalJSHeapSize: window.performance.memory.totalJSHeapSize }; } return null; }); if (memory) { console.log(`内存使用: ${Math.round(memory.usedJSHeapSize / 1024 / 1024)}MB / ${Math.round(memory.totalJSHeapSize / 1024 / 1024)}MB`); } return true; }"
+        }
+      ]
+    },
+    {
+      "name": "test-toggle-performance",
+      "description": "验证切换操作的性能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "准备50个测试事项",
+          "action": "async (page) => { await page.evaluate(() => { const todos = []; for (let i = 1; i <= 50; i++) { todos.push({ id: i, text: `切换测试 ${i}`, completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); } localStorage.setItem('todo-app-data', JSON.stringify(todos)); }); await page.reload(); }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 50,
+          "name": "验证初始数量"
+        },
+        {
+          "type": "custom",
+          "name": "测量批量切换性能",
+          "action": "async (page) => { const startTime = Date.now(); const checkboxes = await page.$$('.todo-checkbox'); for (let i = 0; i < checkboxes.length; i++) { await checkboxes[i].click(); await page.waitForTimeout(10); } const toggleTime = Date.now() - startTime; console.log(`切换50个事项耗时: ${toggleTime}ms`); await page.waitForTimeout(1000); const completedCount = await page.$$eval('.todo-item.completed', items => items.length); console.log(`完成数量: ${completedCount}`); return toggleTime < 3000 && completedCount === 50; }"
+        },
+        {
+          "type": "assert",
+          "selector": "#completed-count",
+          "assertion": "text",
+          "expected": "50",
+          "name": "验证完成数量更新"
+        },
+        {
+          "type": "assert",
+          "selector": "#completion-rate",
+          "assertion": "text",
+          "expected": "100%",
+          "name": "验证完成率更新"
+        }
+      ]
+    },
+    {
+      "name": "test-filter-performance",
+      "description": "验证过滤操作的性能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "准备500个混合状态事项",
+          "action": "async (page) => { await page.evaluate(() => { const todos = []; for (let i = 1; i <= 500; i++) { todos.push({ id: i, text: `过滤测试 ${i}`, completed: i % 2 === 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); } localStorage.setItem('todo-app-data', JSON.stringify(todos)); }); await page.reload(); }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 500,
+          "name": "验证初始数量"
+        },
+        {
+          "type": "custom",
+          "name": "测量过滤到进行中的性能",
+          "action": "async (page) => { const startTime = Date.now(); await page.click('.filter-btn[data-filter=\"active\"]'); await page.waitForSelector('.todo-item', { timeout: 5000 }); const filterTime = Date.now() - startTime; const activeCount = await page.$$eval('.todo-item', items => items.length); console.log(`过滤到进行中事项耗时: ${filterTime}ms, 数量: ${activeCount}`); return filterTime < 2000 && activeCount === 250; }"
+        },
+        {
+          "type": "custom",
+          "name": "测量过滤到已完成的性能",
+          "action": "async (page) => { const startTime = Date.now(); await page.click('.filter-btn[data-filter=\"completed\"]'); await page.waitForSelector('.todo-item', { timeout: 5000 }); const filterTime = Date.now() - startTime; const completedCount = await page.$$eval('.todo-item', items => items.length); console.log(`过滤到已完成事项耗时: ${filterTime}ms, 数量: ${completedCount}`); return filterTime < 2000 && completedCount === 250; }"
+        },
+        {
+          "type": "custom",
+          "name": "测量过滤回全部的性能",
+          "action": "async (page) => { const startTime = Date.now(); await page.click('.filter-btn[data-filter=\"all\"]'); await page.waitForSelector('.todo-item', { timeout: 5000 }); const filterTime = Date.now() - startTime; const allCount = await page.$$eval('.todo-item', items => items.length); console.log(`过滤回全部事项耗时: ${filterTime}ms, 数量: ${allCount}`); return filterTime < 2000 && allCount === 500; }"
+        }
+      ]
+    },
+    {
+      "name": "test-scroll-performance",
+      "description": "验证滚动性能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "准备200个事项用于滚动测试",
+          "action": "async (page) => { await page.evaluate(() => { const todos = []; for (let i = 1; i <= 200; i++) { todos.push({ id: i, text: `滚动测试项目 ${i} - 这是一个较长的待办事项文本用于测试滚动性能`, completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); } localStorage.setItem('todo-app-data', JSON.stringify(todos)); }); await page.reload(); await page.waitForSelector('.todo-item'); }"
+        },
+        {
+          "type": "custom",
+          "name": "测量平滑滚动性能",
+          "action": "async (page) => { const scrollTimes = []; // 测试多次滚动 for (let i = 0; i < 5; i++) { const startTime = Date.now(); await page.evaluate(() => { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }); await page.waitForTimeout(1000); // 等待滚动完成 const scrollTime = Date.now() - startTime; scrollTimes.push(scrollTime); console.log(`第${i + 1}次滚动到底部耗时: ${scrollTime}ms`); // 滚动回顶部 const backStartTime = Date.now(); await page.evaluate(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }); await page.waitForTimeout(1000); const backTime = Date.now() - backStartTime; console.log(`第${i + 1}次滚动回顶部耗时: ${backTime}ms`); } const avgScrollTime = scrollTimes.reduce((a, b) => a + b, 0) / scrollTimes.length; console.log(`平均滚动耗时: ${avgScrollTime.toFixed(2)}ms`); return avgScrollTime < 1500; }"
+        },
+        {
+          "type": "custom",
+          "name": "验证滚动时UI响应",
+          "action": "async (page) => { // 在滚动过程中尝试交互 await page.evaluate(() => { window.scrollTo({ top: document.body.scrollHeight / 2, behavior: 'smooth' }); }); await page.waitForTimeout(500); // 在滚动过程中点击一个事项 const checkboxes = await page.$$('.todo-checkbox'); if (checkboxes.length > 0) { const middleIndex = Math.floor(checkboxes.length / 2); await checkboxes[middleIndex].click(); await page.waitForTimeout(500); const isChecked = await page.evaluate(index => { const checkbox = document.querySelectorAll('.todo-checkbox')[index]; return checkbox.checked; }, middleIndex); console.log(`滚动过程中交互成功: ${isChecked}`); return isChecked; } return false; }"
+        }
+      ]
+    },
+    {
+      "name": "test-memory-cleanup",
+      "description": "验证内存清理性能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "加载大量数据然后清除",
+          "action": "async (page) => { console.log('=== 内存清理性能测试 ==='); // 初始内存状态 const initialMemory = await page.evaluate(() => { if (window.performance && window.performance.memory) { return window.performance.memory.usedJSHeapSize; } return 0; }); console.log(`初始内存使用: ${Math.round(initialMemory / 1024 / 1024)}MB`); // 加载300个事项 await page.evaluate(() => { const todos = []; for (let i = 1; i <= 300; i++) { todos.push({ id: i, text: `内存测试 ${i}`, completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); } localStorage.setItem('todo-app-data', JSON.stringify(todos)); }); await page.reload(); await page.waitForSelector('.todo-item'); // 加载后内存状态 const afterLoadMemory = await page.evaluate(() => { if (window.performance && window.performance.memory) { return window.performance.memory.usedJSHeapSize; } return 0; }); console.log(`加载300项后内存: ${Math.round(afterLoadMemory / 1024 / 1024)}MB`); // 清除所有数据 const clearStartTime = Date.now(); await page.click('#clear-all'); await page.waitForSelector('#confirm-dialog'); await page.click('#confirm-ok'); await page.waitForSelector('.empty-state'); const clearTime = Date.now() - clearStartTime; console.log(`清除300项耗时: ${clearTime}ms`); // 清除后内存状态 await page.waitForTimeout(1000); // 等待GC const afterClearMemory = await page.evaluate(() => { if (window.performance && window.performance.memory) { return window.performance.memory.usedJSHeapSize; } return 0; }); console.log(`清除后内存: ${Math.round(afterClearMemory / 1024 / 1024)}MB`); const memoryReduction = afterLoadMemory - afterClearMemory; console.log(`内存减少: ${Math.round(memoryReduction / 1024 / 1024)}MB`); return clearTime < 5000 && memoryReduction > 0; }"
+        },
+        {
+          "type": "assert",
+          "selector": ".empty-state",
+          "assertion": "visible",
+          "name": "验证成功清除所有数据"
+        },
+        {
+          "type": "assert",
+          "selector": "#total-count",
+          "assertion": "text",
+          "expected": "0",
+          "name": "验证总计数量清零"
+        }
+      ]
+    },
+    {
+      "name": "test-concurrent-operations",
+      "description": "验证并发操作性能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "清空现有数据",
+          "action": "async (page) => { await page.evaluate(() => localStorage.clear()); await page.reload(); }"
+        },
+        {
+          "type": "custom",
+          "name": "模拟快速连续添加",
+          "action": "async (page) => { console.log('=== 并发操作性能测试 ==='); const startTime = Date.now(); const promises = []; // 同时发起10个添加操作 for (let i = 1; i <= 10; i++) { promises.push((async (index) => { await page.type('#todo-input', `并发测试 ${index}`); await page.click('#add-btn'); await page.waitForTimeout(10); })(i)); } await Promise.all(promises); const totalTime = Date.now() - startTime; console.log(`并发添加10个事项总耗时: ${totalTime}ms`); await page.waitForTimeout(1000); // 等待所有操作完成 const itemCount = await page.$$eval('.todo-item', items => items.length); console.log(`最终事项数量: ${itemCount}`); return totalTime < 3000 && itemCount === 10; }"
+        },
+        {
+          "type": "custom",
+          "name": "模拟快速切换操作",
+          "action": "async (page) => { const startTime = Date.now(); const checkboxes = await page.$$('.todo-checkbox'); const togglePromises = checkboxes.map((checkbox, index) => checkbox.click()); await Promise.all(togglePromises); const toggleTime = Date.now() - startTime; console.log(`并发切换${checkboxes.length}个事项耗时: ${toggleTime}ms`); await page.waitForTimeout(1000); const completedCount = await page.$$eval('.todo-item.completed', items => items.length); console.log(`完成数量: ${completedCount}`); return toggleTime < 2000 && completedCount === 10; }"
+        }
+      ]
+    }
+  ]
+}

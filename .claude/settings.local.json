@@ -13,7 +13,9 @@
       "Bash(npx tsc:*)",
       "Bash(git push:*)",
       "Bash(tree:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(xargs basename:*)",
+      "Bash(git restore:*)"
     ]
   }
 }

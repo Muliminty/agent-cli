@@ -1,0 +1,73 @@
+{
+  "name": "todo-web-app-example",
+  "version": "1.0.0",
+  "description": "Todo Web应用示例 - Agent-CLI测试框架演示项目",
+  "main": "index.html",
+  "scripts": {
+    "start": "node scripts/start-server.js",
+    "test": "./scripts/run-tests.sh",
+    "test:basic": "./scripts/run-tests.sh --suite todo-basic",
+    "test:advanced": "./scripts/run-tests.sh --suite todo-advanced",
+    "test:error": "./scripts/run-tests.sh --suite todo-error-cases",
+    "test:performance": "./scripts/run-tests.sh --suite todo-performance",
+    "test:report": "./scripts/generate-report.sh",
+    "test:all": "npm run test:basic && npm run test:advanced && npm run test:error && npm run test:performance",
+    "clean": "rm -rf screenshots reports logs",
+    "preview": "open http://localhost:3000 || xdg-open http://localhost:3000 || echo '请在浏览器中打开: http://localhost:3000'",
+    "dev": "concurrently \"npm run start\" \"npm run preview\"",
+    "validate": "node scripts/validate-config.js",
+    "demo": "echo '启动演示...' && npm start & sleep 2 && npm run test:basic"
+  },
+  "keywords": [
+    "todo",
+    "web-app",
+    "testing",
+    "agent-cli",
+    "e2e",
+    "puppeteer",
+    "example"
+  ],
+  "author": "Agent-CLI Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/agent-cli.git",
+    "directory": "examples/web-app"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/agent-cli/issues"
+  },
+  "homepage": "https://github.com/your-org/agent-cli/tree/main/examples/web-app",
+  "files": [
+    "index.html",
+    "app.js",
+    "style.css",
+    "test-config.json",
+    "tests/",
+    "scripts/",
+    "docs/",
+    "README.md"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  },
+  "optionalDependencies": {},
+  "peerDependencies": {},
+  "bundledDependencies": [],
+  "config": {
+    "port": 3000,
+    "host": "localhost",
+    "testTimeout": 30000
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions"
+  ],
+  "private": true
+}

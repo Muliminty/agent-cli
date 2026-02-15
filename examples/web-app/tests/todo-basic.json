@@ -1,0 +1,401 @@
+{
+  "name": "todo-basic",
+  "description": "Todo应用基础功能测试 - 验证核心CRUD操作",
+  "version": "1.0.0",
+  "timeout": 60000,
+  "tests": [
+    {
+      "name": "test-page-load",
+      "description": "验证页面正确加载和基本元素可见",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "wait",
+          "selector": "body",
+          "timeout": 10000,
+          "name": "等待页面加载"
+        },
+        {
+          "type": "assert",
+          "selector": "h1",
+          "assertion": "text",
+          "expected": "Todo应用",
+          "name": "验证页面标题"
+        },
+        {
+          "type": "assert",
+          "selector": ".subtitle",
+          "assertion": "text",
+          "expected": "Agent-CLI测试框架示例项目",
+          "name": "验证副标题"
+        },
+        {
+          "type": "assert",
+          "selector": "#todo-input",
+          "assertion": "visible",
+          "name": "验证输入框可见"
+        },
+        {
+          "type": "assert",
+          "selector": "#add-btn",
+          "assertion": "visible",
+          "name": "验证添加按钮可见"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-list",
+          "assertion": "visible",
+          "name": "验证待办事项列表可见"
+        },
+        {
+          "type": "custom",
+          "name": "验证初始状态",
+          "action": "async (page) => { const emptyState = await page.$('.empty-state'); return emptyState !== null; }"
+        }
+      ]
+    },
+    {
+      "name": "test-add-todo",
+      "description": "验证添加待办事项功能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "清空现有数据",
+          "action": "async (page) => { await page.evaluate(() => localStorage.clear()); await page.reload(); }"
+        },
+        {
+          "type": "type",
+          "selector": "#todo-input",
+          "text": "测试待办事项1",
+          "name": "输入待办事项文本"
+        },
+        {
+          "type": "click",
+          "selector": "#add-btn",
+          "name": "点击添加按钮"
+        },
+        {
+          "type": "wait",
+          "timeout": 1000,
+          "name": "等待添加完成"
+        },
+        {
+          "type": "assert",
+          "selector": "#todo-input",
+          "assertion": "text",
+          "expected": "",
+          "name": "验证输入框已清空"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 1,
+          "name": "验证待办事项数量为1"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-text",
+          "assertion": "text",
+          "expected": "测试待办事项1",
+          "name": "验证待办事项文本正确"
+        },
+        {
+          "type": "assert",
+          "selector": "#total-count",
+          "assertion": "text",
+          "expected": "1",
+          "name": "验证总计数量更新"
+        },
+        {
+          "type": "custom",
+          "name": "验证本地存储",
+          "action": "async (page) => { const data = await page.evaluate(() => localStorage.getItem('todo-app-data')); return data && JSON.parse(data).length === 1; }"
+        }
+      ]
+    },
+    {
+      "name": "test-add-todo-enter-key",
+      "description": "验证使用Enter键添加待办事项",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "清空现有数据",
+          "action": "async (page) => { await page.evaluate(() => localStorage.clear()); await page.reload(); }"
+        },
+        {
+          "type": "type",
+          "selector": "#todo-input",
+          "text": "测试待办事项2",
+          "name": "输入待办事项文本"
+        },
+        {
+          "type": "custom",
+          "name": "按下Enter键",
+          "action": "async (page) => { await page.keyboard.press('Enter'); }"
+        },
+        {
+          "type": "wait",
+          "timeout": 1000,
+          "name": "等待添加完成"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 1,
+          "name": "验证待办事项数量为1"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-text",
+          "assertion": "text",
+          "expected": "测试待办事项2",
+          "name": "验证待办事项文本正确"
+        }
+      ]
+    },
+    {
+      "name": "test-toggle-todo",
+      "description": "验证切换待办事项完成状态",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "准备测试数据",
+          "action": "async (page) => { await page.evaluate(() => { localStorage.setItem('todo-app-data', JSON.stringify([{ id: 1, text: '测试待办事项', completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])); }); await page.reload(); }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 1,
+          "name": "验证初始数量"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "visible",
+          "name": "验证待办事项可见"
+        },
+        {
+          "type": "click",
+          "selector": ".todo-checkbox",
+          "name": "点击复选框标记为完成"
+        },
+        {
+          "type": "wait",
+          "timeout": 1000,
+          "name": "等待状态更新"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item.completed",
+          "assertion": "count",
+          "expected": 1,
+          "name": "验证完成状态样式"
+        },
+        {
+          "type": "assert",
+          "selector": "#completed-count",
+          "assertion": "text",
+          "expected": "1",
+          "name": "验证已完成数量更新"
+        },
+        {
+          "type": "assert",
+          "selector": "#completion-rate",
+          "assertion": "text",
+          "expected": "100%",
+          "name": "验证完成率更新"
+        },
+        {
+          "type": "click",
+          "selector": ".todo-checkbox",
+          "name": "再次点击复选框取消完成"
+        },
+        {
+          "type": "wait",
+          "timeout": 1000,
+          "name": "等待状态更新"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item.completed",
+          "assertion": "count",
+          "expected": 0,
+          "name": "验证完成状态已取消"
+        },
+        {
+          "type": "assert",
+          "selector": "#completed-count",
+          "assertion": "text",
+          "expected": "0",
+          "name": "验证已完成数量重置"
+        }
+      ]
+    },
+    {
+      "name": "test-delete-todo",
+      "description": "验证删除待办事项功能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "准备测试数据",
+          "action": "async (page) => { await page.evaluate(() => { localStorage.setItem('todo-app-data', JSON.stringify([{ id: 1, text: '待删除的待办事项', completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])); }); await page.reload(); }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 1,
+          "name": "验证初始数量"
+        },
+        {
+          "type": "click",
+          "selector": ".todo-action-btn.delete",
+          "name": "点击删除按钮"
+        },
+        {
+          "type": "wait",
+          "selector": "#confirm-dialog",
+          "timeout": 3000,
+          "name": "等待确认对话框出现"
+        },
+        {
+          "type": "assert",
+          "selector": "#confirm-dialog",
+          "assertion": "visible",
+          "name": "验证确认对话框可见"
+        },
+        {
+          "type": "click",
+          "selector": "#confirm-ok",
+          "name": "点击确认按钮"
+        },
+        {
+          "type": "wait",
+          "timeout": 2000,
+          "name": "等待删除完成"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 0,
+          "name": "验证待办事项已删除"
+        },
+        {
+          "type": "assert",
+          "selector": ".empty-state",
+          "assertion": "visible",
+          "name": "验证空状态显示"
+        },
+        {
+          "type": "assert",
+          "selector": "#total-count",
+          "assertion": "text",
+          "expected": "0",
+          "name": "验证总计数量更新"
+        }
+      ]
+    },
+    {
+      "name": "test-filter-todos",
+      "description": "验证待办事项过滤功能",
+      "steps": [
+        {
+          "type": "navigate",
+          "url": "http://localhost:3000",
+          "name": "导航到Todo应用"
+        },
+        {
+          "type": "custom",
+          "name": "准备测试数据",
+          "action": "async (page) => { await page.evaluate(() => { localStorage.setItem('todo-app-data', JSON.stringify([ { id: 1, text: '进行中事项1', completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, { id: 2, text: '进行中事项2', completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, { id: 3, text: '已完成事项1', completed: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, { id: 4, text: '已完成事项2', completed: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } ])); }); await page.reload(); }"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 4,
+          "name": "验证初始全部显示4项"
+        },
+        {
+          "type": "click",
+          "selector": ".filter-btn[data-filter='active']",
+          "name": "点击'进行中'过滤按钮"
+        },
+        {
+          "type": "wait",
+          "timeout": 1000,
+          "name": "等待过滤生效"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 2,
+          "name": "验证只显示2个进行中事项"
+        },
+        {
+          "type": "click",
+          "selector": ".filter-btn[data-filter='completed']",
+          "name": "点击'已完成'过滤按钮"
+        },
+        {
+          "type": "wait",
+          "timeout": 1000,
+          "name": "等待过滤生效"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 2,
+          "name": "验证只显示2个已完成事项"
+        },
+        {
+          "type": "click",
+          "selector": ".filter-btn[data-filter='all']",
+          "name": "点击'全部'过滤按钮"
+        },
+        {
+          "type": "wait",
+          "timeout": 1000,
+          "name": "等待过滤生效"
+        },
+        {
+          "type": "assert",
+          "selector": ".todo-item",
+          "assertion": "count",
+          "expected": 4,
+          "name": "验证重新显示全部4项"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "name": "todo-app-test-suite",
+  "description": "Todo应用端到端测试套件 - Agent-CLI测试示例",
+  "version": "1.0.0",
+  "author": "Agent-CLI Team",
+  "baseUrl": "http://localhost:3000",
+  "timeout": 30000,
+  "headless": true,
+  "screenshotDir": "./screenshots",
+  "reportDir": "./reports",
+  "parallel": false,
+  "retry": 2,
+  "environment": {
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "locale": "zh-CN",
+    "timezone": "Asia/Shanghai"
+  },
+  "setup": [
+    {
+      "type": "custom",
+      "name": "clear-local-storage",
+      "action": "async (page) => { await page.evaluate(() => localStorage.clear()); }"
+    },
+    {
+      "type": "custom",
+      "name": "set-test-environment",
+      "action": "async (page) => { await page.evaluate(() => { window.__TEST_MODE__ = true; }); }"
+    }
+  ],
+  "teardown": [
+    {
+      "type": "custom",
+      "name": "cleanup-test-environment",
+      "action": "async (page) => { await page.evaluate(() => { delete window.__TEST_MODE__; }); }"
+    },
+    {
+      "type": "custom",
+      "name": "take-final-screenshot",
+      "action": "async (page) => { await page.screenshot({ path: './screenshots/final-state.png', fullPage: true }); }"
+    }
+  ],
+  "suites": [
+    "./tests/todo-basic.json",
+    "./tests/todo-advanced.json",
+    "./tests/todo-error-cases.json",
+    "./tests/todo-performance.json"
+  ],
+  "hooks": {
+    "beforeSuite": "async (suiteName) => { console.log(`开始测试套件: ${suiteName}`); }",
+    "afterSuite": "async (suiteName, results) => { console.log(`测试套件完成: ${suiteName}, 结果: ${results.passed}/${results.total}`); }",
+    "beforeTest": "async (testName) => { console.log(`开始测试: ${testName}`); }",
+    "afterTest": "async (testName, passed) => { console.log(`测试完成: ${testName}, 结果: ${passed ? '通过' : '失败'}`); }"
+  },
+  "assertions": {
+    "strict": false,
+    "timeout": 5000,
+    "pollInterval": 100
+  },
+  "logging": {
+    "level": "info",
+    "console": true,
+    "file": "./logs/test-execution.log",
+    "screenshotOnFailure": true,
+    "videoOnFailure": false
+  },
+  "notifications": {
+    "onSuccess": false,
+    "onFailure": true,
+    "webhook": null
+  },
+  "metadata": {
+    "project": "agent-cli-examples",
+    "component": "todo-web-app",
+    "testType": "e2e",
+    "priority": "high",
+    "tags": ["web", "todo", "e2e", "demo"],
+    "requirements": ["REQ-001", "REQ-002", "REQ-003"]
+  }
+}
