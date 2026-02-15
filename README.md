@@ -130,8 +130,12 @@ agent-cli/
 ├── tsup.config.ts                  # 构建配置 ✓
 ├── jest.config.js                  # 测试配置 ✓
 ├── .gitignore                      # Git忽略配置 ✓
-├── PROGRESS.md                     # 详细进度文档 ✓
-├── TODO.md                         # 任务清单 ✓
+├── !doc/                           # 文档目录 ✓
+│   ├── PROGRESS.md                 # 详细进度文档 ✓
+│   ├── TODO.md                     # 任务清单和优先级 ✓
+│   ├── USER_GUIDE.md               # 完整用户指南 ✓
+│   ├── Agent-CLI-项目介绍与使用指南.md # 项目介绍和推广文章 ✓
+│   └── 避免上下文爆炸的开发工作流方案.md # 技术方案原理解析 ✓
 ├── README.md                       # 项目文档（当前文件）✓
 ├── bin/
 │   └── agent-cli                   # CLI可执行文件入口 ✓
@@ -200,7 +204,7 @@ agent-cli/
 
 **说明**：项目核心功能（96.8%）已基本完成，剩余主要是文档完善和可选的可视化界面。
 
-详细任务列表请查看 [TODO.md](./TODO.md)
+详细任务列表请查看 [!doc/TODO.md](!doc/TODO.md)
 
 ## 开发指南
 
@@ -210,8 +214,8 @@ agent-cli/
 1. **查看当前状态**:
    ```bash
    cd /Users/muliminty/project/agent-cli
-   cat PROGRESS.md  # 查看详细进度
-   cat TODO.md      # 查看任务清单
+   cat "!doc/PROGRESS.md"  # 查看详细进度
+   cat "!doc/TODO.md"      # 查看任务清单
    ```
 
 2. **安装依赖**:
@@ -304,17 +308,19 @@ agent-cli/
 3. **可视化Web界面** (可选) - ⬜ CLI + 本地Web服务器方案
 
 ### 文档资源
-- [PROGRESS.md](./PROGRESS.md) - 详细开发进度和当前状态
-- [TODO.md](./TODO.md) - 任务清单和优先级
-- [USER_GUIDE.md](./USER_GUIDE.md) - 完整用户指南和详细使用说明
+- [!doc/PROGRESS.md](!doc/PROGRESS.md) - 详细开发进度和当前状态
+- [!doc/TODO.md](!doc/TODO.md) - 任务清单和优先级
+- [!doc/USER_GUIDE.md](!doc/USER_GUIDE.md) - 完整用户指南和详细使用说明
+- [!doc/Agent-CLI-项目介绍与使用指南.md](!doc/Agent-CLI-项目介绍与使用指南.md) - 项目介绍和推广文章
+- [!doc/避免上下文爆炸的开发工作流方案.md](!doc/避免上下文爆炸的开发工作流方案.md) - 技术方案原理解析
 
 ### 详细进度
-请查看 [PROGRESS.md](./PROGRESS.md) 获取详细进度和 [TODO.md](./TODO.md) 查看任务清单。
+请查看 [!doc/PROGRESS.md](!doc/PROGRESS.md) 获取详细进度和 [!doc/TODO.md](!doc/TODO.md) 查看任务清单。
 
 ## 联系方式
 
 **项目位置**: `/Users/muliminty/project/agent-cli`
-**文档位置**: `PROGRESS.md`, `TODO.md`, `README.md`, `USER_GUIDE.md`
+**文档位置**: `!doc/PROGRESS.md`, `!doc/TODO.md`, `README.md`, `!doc/USER_GUIDE.md`
 **开发状态**: 核心功能已完成 (96.8%)，剩余优化任务进行中
 
 ---
