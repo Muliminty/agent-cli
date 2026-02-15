@@ -64,7 +64,7 @@ class StaticServer {
 
     // 处理根路径
     if (parsedUrl.pathname === '/') {
-      this.serveDefaultFile(res);
+      this.serveDefaultFile(req, res);
       return;
     }
 
@@ -87,38 +87,38 @@ class StaticServer {
 
       // 如果是目录，尝试提供默认文件
       if (stats.isDirectory()) {
-        this.serveDirectory(filePath, res);
+        this.serveDirectory(filePath, req, res);
         return;
       }
 
       // 提供文件
-      this.serveFile(filePath, stats, res);
+      this.serveFile(req, filePath, stats, res);
     });
   }
 
-  serveDefaultFile(res) {
+  serveDefaultFile(req, res) {
     for (const defaultFile of DEFAULT_FILES) {
       const filePath = path.join(ROOT_DIR, defaultFile);
       if (fs.existsSync(filePath)) {
-        this.serveFile(filePath, fs.statSync(filePath), res);
+        this.serveFile(req, filePath, fs.statSync(filePath), res);
         return;
       }
     }
     this.sendError(res, 404, '未找到默认文件');
   }
 
-  serveDirectory(dirPath, res) {
+  serveDirectory(dirPath, req, res) {
     for (const defaultFile of DEFAULT_FILES) {
       const filePath = path.join(dirPath, defaultFile);
       if (fs.existsSync(filePath)) {
-        this.serveFile(filePath, fs.statSync(filePath), res);
+        this.serveFile(req, filePath, fs.statSync(filePath), res);
         return;
       }
     }
     this.sendError(res, 403, '目录浏览已禁用');
   }
 
-  serveFile(filePath, stats, res) {
+  serveFile(req, filePath, stats, res) {
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 

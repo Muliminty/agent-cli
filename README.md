@@ -4,8 +4,8 @@
 
 ## 项目状态
 
-**当前阶段**: 第二阶段核心模块（智能体框架和上下文监控完成）
-**进度**: 58.1% (54/93 任务完成)
+**当前阶段**: 第五阶段完善和优化（核心功能已基本完成）
+**进度**: 91.4% (85/93 任务完成)
 **最后更新**: 2026-02-15
 
 **未来计划**: 将添加可视化Web界面（方案C：CLI + 本地Web服务器），使非技术用户也能方便使用
@@ -37,30 +37,132 @@ npm test         # 运行测试
 npm run build    # 生产构建
 ```
 
+## 使用示例
+
+### 基本命令
+
+```bash
+# 查看所有可用命令
+agent-cli --help
+
+# 初始化新项目
+agent-cli init my-project --template web-app
+
+# 查看项目状态
+agent-cli status
+
+# 获取下一个推荐功能
+agent-cli next
+
+# 执行测试
+agent-cli test --suites "tests/*.json"
+
+# 生成项目报告
+agent-cli report --type summary --format html --output ./report.html
+
+# 管理配置
+agent-cli config --list
+agent-cli config --set "agent.model=claude-3-5-sonnet"
+
+# 上下文监控
+agent-cli context --input messages.json --threshold 0.8
+
+# 项目重置
+agent-cli reset --type progress --backup
+
+# 模板管理
+agent-cli template list
+agent-cli template info init-prompt
+agent-cli template render init-prompt --output ./output.md --data '{"projectName":"测试"}'
+agent-cli template add ./my-template.md
+```
+
+### 配置文件示例
+
+创建 `agent.config.json` 文件：
+
+```json
+{
+  "$schema": "./node_modules/agent-cli/schemas/config.schema.json",
+  "project": {
+    "name": "my-web-app",
+    "description": "A modern web application",
+    "type": "web-app",
+    "techStack": ["react", "typescript", "tailwind"]
+  },
+  "agent": {
+    "model": "claude-3-5-sonnet",
+    "initializer": {
+      "maxFeatures": 200,
+      "featureDetailLevel": "high"
+    },
+    "coder": {
+      "incrementalMode": true,
+      "maxStepsPerSession": 1,
+      "requireTests": true
+    },
+    "contextMonitor": {
+      "enabled": true,
+      "warningThreshold": 0.8,
+      "autoSummarize": true
+    }
+  },
+  "testing": {
+    "framework": "puppeteer",
+    "headless": true,
+    "timeout": 30000
+  },
+  "git": {
+    "autoCommit": true,
+    "branch": "main"
+  }
+}
+```
+
 ## 项目结构
 
 ```
 agent-cli/
-├── package.json                    # 项目配置和依赖
-├── tsconfig.json                   # TypeScript配置
-├── tsup.config.ts                  # 构建配置
-├── jest.config.js                  # 测试配置
-├── .gitignore                      # Git忽略配置
-├── PROGRESS.md                     # 详细进度文档
-├── TODO.md                         # 任务清单
-├── README.md                       # 项目文档（当前文件）
+├── package.json                    # 项目配置和依赖 ✓
+├── tsconfig.json                   # TypeScript配置 ✓
+├── tsup.config.ts                  # 构建配置 ✓
+├── jest.config.js                  # 测试配置 ✓
+├── .gitignore                      # Git忽略配置 ✓
+├── PROGRESS.md                     # 详细进度文档 ✓
+├── TODO.md                         # 任务清单 ✓
+├── README.md                       # 项目文档（当前文件）✓
+├── bin/
+│   └── agent-cli                   # CLI可执行文件入口 ✓
+├── templates/                      # 模板系统 ✓
+│   ├── init-prompt.md              # 初始化提示词模板 ✓
+│   ├── coder-prompt.md             # 编码提示词模板 ✓
+│   └── feature-list.json           # 功能列表模板 ✓
+├── examples/                       # 示例项目 ✓
+│   └── web-app/                    # 完整的Todo Web应用示例 ✓
 └── src/
     ├── types/                      # 类型定义 ✓
-    │   ├── index.ts                # 类型导出
-    │   ├── feature.ts              # 功能类型定义
-    │   ├── config.ts               # 配置类型定义
-    │   └── project.ts              # 项目状态类型
-    ├── config/                     # 配置管理
+    │   ├── index.ts                # 类型导出 ✓
+    │   ├── feature.ts              # 功能类型定义 ✓
+    │   ├── config.ts               # 配置类型定义 ✓
+    │   └── project.ts              # 项目状态类型 ✓
+    ├── config/                     # 配置管理 ✓
+    │   ├── loader.ts               # 配置加载和解析 ✓
+    │   ├── defaults.ts             # 默认配置常量 ✓
     │   └── schema.ts               # 配置schema和验证 ✓
-    ├── cli/                        # CLI框架（待实现）
-    ├── core/                       # 核心模块（待实现）
-    ├── utils/                      # 工具函数（待实现）
-    └── index.ts                    # 主入口（待实现）
+    ├── cli/                        # CLI框架 ✓
+    │   ├── index.ts                # CLI入口和命令路由 ✓
+    │   ├── parser.ts               # 命令行参数解析 ✓
+    │   └── commands/               # CLI命令实现 ✓
+    ├── core/                       # 核心模块 ✓
+    │   ├── progress/               # 进度跟踪系统 ✓
+    │   ├── git/                    # Git集成模块 ✓
+    │   ├── agent/                  # 智能体框架 ✓
+    │   └── test/                   # 测试框架 ✓
+    ├── utils/                      # 工具函数 ✓
+    │   ├── logger.ts               # 日志工具 ✓
+    │   ├── file-utils.ts           # 文件操作工具 ✓
+    │   └── token-counter.ts        # Token估算器 ✓
+    └── index.ts                    # 主入口 ✓
 ```
 
 ## 技术栈
@@ -74,29 +176,27 @@ agent-cli/
 ## 进度跟踪
 
 ### 已完成
-- ✅ 项目初始化和配置
-- ✅ TypeScript构建配置
-- ✅ 核心类型系统（Feature, Config, Project）
-- ✅ 配置验证schema（使用Zod）
-- ✅ 进度文档和任务清单
-- ✅ CLI入口文件和框架
-- ✅ 日志工具（彩色输出、文件日志）
-- ✅ 配置加载器和默认配置
-- ✅ 进度跟踪器（核心模块）
-- ✅ Git集成模块（管理器和操作封装）
+- ✅ **项目基础架构**：TypeScript构建配置、测试配置、Git忽略配置
+- ✅ **核心类型系统**：Feature、Config、Project类型定义和Zod验证schema
+- ✅ **CLI框架**：可执行文件入口、命令路由、参数解析、帮助系统
+- ✅ **配置系统**：配置文件加载、环境变量支持、配置合并和验证
+- ✅ **进度跟踪系统**：双轨方案实现、进度文件管理、状态同步机制
+- ✅ **Git集成模块**：Git管理器、操作封装、自动化提交、分支管理
+- ✅ **智能体框架**：基础智能体抽象类、初始化智能体、编码智能体、上下文监控智能体
+- ✅ **上下文监控系统**：Token估算器、实时监控、阈值预警、自动会话总结
+- ✅ **模板系统**：初始化提示词模板、编码提示词模板、功能列表模板
+- ✅ **测试框架**：Puppeteer测试运行器、测试管理器、结果管理和报告生成
+- ✅ **工具函数**：日志工具、文件操作工具、Token估算器
+- ✅ **CLI命令**：config（配置管理）、report（报告生成）、reset（项目重置）、context（上下文监控）等命令
+- ✅ **示例项目**：完整的Todo Web应用示例，包含测试套件和文档
 
-### 待完成
-- ✅ CLI框架实现
-- ✅ 工具函数模块（部分）
-- ✅ 配置加载器
-- ✅ 进度跟踪系统（核心）
-- ✅ Git集成模块
-- ⬜ 智能体实现
-- ⬜ 测试框架
-- ⬜ 模板系统
-- ⬜ 文件操作工具
-- ⬜ 交互式提示工具
-- ⬜ 命令解析器
+### 待完成（剩余8.6%）
+- ⬜ **模板系统完善**：变量替换功能、模板自定义支持
+- ⬜ **测试套件编写**：单元测试、集成测试、端到端测试
+- ⬜ **文档完善**：用户指南、API文档、最佳实践指南
+- ⬜ **可视化Web界面**（可选）：CLI + 本地Web服务器方案
+
+**说明**：项目核心功能（91.4%）已基本完成，剩余主要是完善和优化工作。
 
 详细任务列表请查看 [TODO.md](./TODO.md)
 
@@ -180,28 +280,37 @@ agent-cli/
 }
 ```
 
-## 下一步计划
+## 核心功能状态
 
-### 高优先级（建议接下来完成）
-1. ✅ 实现 CLI 入口文件和框架
-2. ✅ 创建日志和工具函数模块
-3. ✅ 实现配置加载器
-4. ✅ 实现进度跟踪器
-5. ✅ 实现 Git 管理器
-6. 实现智能体基类
-7. 实现文件操作工具
-8. 实现命令解析器
+### 已完成的核心功能 ✅
 
-### 详细计划
-请查看 [PROGRESS.md](./PROGRESS.md) 获取详细的下步行动计划。
+1. **CLI框架** - 完整的命令行界面，支持10+命令
+2. **配置系统** - JSON配置文件、环境变量、配置验证
+3. **进度跟踪系统** - 双轨方案实现，结构化进度管理
+4. **Git集成模块** - 自动化提交、分支管理、状态同步
+5. **智能体框架** - 基础智能体、初始化智能体、编码智能体、上下文监控智能体
+6. **上下文监控系统** - Token估算、实时预警、自动会话总结
+7. **模板系统** - 变量替换、自定义模板、模板管理CLI命令
+8. **测试框架** - Puppeteer测试运行器、测试管理器、报告生成
+9. **工具函数库** - 文件操作、日志、Token计数器、验证工具
+10. **示例项目** - 完整的Todo Web应用示例，包含测试套件
+
+### 剩余优化任务 📋
+
+1. **测试套件完善** - 编写单元测试和集成测试
+2. **文档完善** - 用户指南、API文档、最佳实践
+3. **可视化Web界面** (可选) - CLI + 本地Web服务器方案
+
+### 详细进度
+请查看 [PROGRESS.md](./PROGRESS.md) 获取详细进度和 [TODO.md](./TODO.md) 查看任务清单。
 
 ## 联系方式
 
 **项目位置**: `/Users/muliminty/project/agent-cli`
-**文档位置**: `PROGRESS.md`, `TODO.md`
-**开发状态**: 进行中
+**文档位置**: `PROGRESS.md`, `TODO.md`, `README.md`
+**开发状态**: 核心功能已完成 (91.4%)，剩余优化任务进行中
 
 ---
 *开始时间: 2026-02-13*
-*预计完成: 根据进度调整*
+*最后更新: 2026-02-15*
 *维护者: Muliminty*

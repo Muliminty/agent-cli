@@ -12,6 +12,9 @@ export default {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
+  testPathIgnorePatterns: ['/node_modules/', '/src/types/test.ts'],
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  modulePaths: ['<rootDir>/src'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   },

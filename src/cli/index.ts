@@ -532,6 +532,96 @@ async function loadCommandModules(): Promise<CommandModule[]> {
       }
     })
 
+    // 添加模板管理命令
+    commands.push({
+      command: 'template <subcommand> [otherArgs...]',
+      description: '模板管理 - 管理内置和用户自定义模板',
+      options: [
+        {
+          flags: '-t, --type <type>',
+          description: '模板类型 (builtin, user, project)'
+        },
+        {
+          flags: '-q, --query <query>',
+          description: '搜索查询'
+        },
+        {
+          flags: '--tags <tags>',
+          description: '标签过滤（逗号分隔）'
+        },
+        {
+          flags: '-o, --output <path>',
+          description: '输出文件路径（render命令使用）'
+        },
+        {
+          flags: '--data-file <path>',
+          description: '数据文件路径（JSON格式）'
+        },
+        {
+          flags: '--data <json>',
+          description: '数据内容（JSON字符串）'
+        },
+        {
+          flags: '--env-prefix <prefix>',
+          description: '环境变量前缀'
+        },
+        {
+          flags: '-i, --interactive',
+          description: '交互式模式'
+        },
+        {
+          flags: '--skip-validation',
+          description: '跳过变量验证'
+        },
+        {
+          flags: '--strict',
+          description: '严格模式（必需变量必须提供）'
+        },
+        {
+          flags: '--ensure-dir',
+          description: '确保输出目录存在'
+        },
+        {
+          flags: '--extra-data <json>',
+          description: '额外数据（JSON字符串）'
+        },
+        {
+          flags: '--force',
+          description: '强制操作（不确认）'
+        },
+        {
+          flags: '--test-data <json>',
+          description: '测试数据（JSON字符串，validate命令使用）'
+        },
+        {
+          flags: '-v, --verbose',
+          description: '详细模式'
+        },
+        {
+          flags: '--debug',
+          description: '调试模式'
+        }
+      ],
+      action: async (...allArgs) => {
+        try {
+          console.log('DEBUG: template action allArgs:', allArgs.map(arg => typeof arg === 'string' ? `"${arg}"` : typeof arg));
+          const options = allArgs[allArgs.length - 1] || {};
+          const positionArgs = allArgs.slice(0, -1);
+
+          // 将位置参数放入options.args
+          options.args = positionArgs;
+          console.log('DEBUG: template action positionArgs:', positionArgs, 'options.args:', options.args, 'options keys:', Object.keys(options));
+
+          // 动态导入处理函数以避免循环依赖
+          const { handleTemplateCommand } = await import('./commands/template.js')
+          await handleTemplateCommand(options)
+        } catch (error) {
+          console.error('❌ 执行template命令失败:', error)
+          throw error
+        }
+      }
+    })
+
     // 添加下一步命令
     commands.push({
       command: 'next',
@@ -623,6 +713,9 @@ function addValidationToCommand(command: Command, cmd: CommandModule, parser: Co
       // 提取参数和选项
       const options = args[args.length - 1] || {}
       const commandArgs = args.slice(0, -1)
+
+      // 将位置参数保存到options.args
+      options.args = commandArgs
 
       // 基本验证（根据选项类型）
       const validationErrors: string[] = []
