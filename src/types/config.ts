@@ -260,7 +260,8 @@ export const DEFAULT_CONFIG: Config = {
       enabled: true,
       directory: 'public',
       maxAge: 86400,
-      index: true
+      index: true,
+      fallback: 'index.html'
     },
     cors: {
       enabled: true,

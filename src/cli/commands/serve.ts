@@ -10,7 +10,7 @@ import chalk from 'chalk'
 import boxen from 'boxen'
 import { default as open } from 'open'
 import fs from 'fs'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 
 const logger = createLogger('serve')
@@ -34,6 +34,9 @@ export async function handleServeCommand(options: any): Promise<void> {
       logger.info(`创建静态文件目录: ${staticDir}`)
       mkdirSync(staticDir, { recursive: true })
     }
+
+    // 创建默认仪表板文件（如果不存在）
+    await createDefaultDashboard(options.cwd || process.cwd())
 
     // 创建服务器实例
     const server = await createDevServer(mergedConfig, options.cwd)
@@ -771,9 +774,14 @@ export async function createDefaultDashboard(cwd: string): Promise<void> {
   if (!existsSync(dashboardFile)) {
     logger.info('正在创建默认仪表板...')
     const html = generateDefaultDashboard(cwd)
-    await import('fs').then(fs => {
-      fs.writeFileSync(dashboardFile, html, 'utf-8')
-    })
+
+    // 确保目录存在
+    if (!existsSync(staticDir)) {
+      mkdirSync(staticDir, { recursive: true })
+    }
+
+    // 使用同步写入
+    writeFileSync(dashboardFile, html, 'utf-8')
     logger.info(`仪表板已创建: ${dashboardFile}`)
   }
 }

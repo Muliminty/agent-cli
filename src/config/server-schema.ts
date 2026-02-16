@@ -121,7 +121,8 @@ export const DEFAULT_SERVER_CONFIG: ServerConfig = {
     enabled: true,
     directory: 'public',
     maxAge: 86400,
-    index: true
+    index: true,
+    fallback: 'index.html'
   },
   cors: {
     enabled: true,
