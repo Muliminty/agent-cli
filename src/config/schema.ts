@@ -370,6 +370,294 @@ export function generateJsonSchema(): object {
         },
         default: {}
       },
+      server: {
+        type: 'object',
+        description: 'Web server configuration for visualization dashboard',
+        properties: {
+          enabled: {
+            type: 'boolean',
+            description: 'Enable web server',
+            default: false
+          },
+          port: {
+            type: 'number',
+            description: 'Server port',
+            minimum: 1,
+            maximum: 65535,
+            default: 3000
+          },
+          host: {
+            type: 'string',
+            description: 'Server host',
+            default: 'localhost'
+          },
+          basePath: {
+            type: 'string',
+            description: 'Base path for API routes',
+            default: '/'
+          },
+          trustProxy: {
+            type: 'boolean',
+            description: 'Trust proxy headers',
+            default: false
+          },
+          timeout: {
+            type: 'number',
+            description: 'Request timeout in milliseconds',
+            minimum: 1000,
+            maximum: 300000,
+            default: 30000
+          },
+          keepAliveTimeout: {
+            type: 'number',
+            description: 'Keep-alive timeout in milliseconds',
+            minimum: 1000,
+            maximum: 120000,
+            default: 5000
+          },
+          maxHeadersCount: {
+            type: 'number',
+            description: 'Maximum number of headers',
+            minimum: 1,
+            maximum: 2000,
+            default: 2000
+          },
+          websocket: {
+            type: 'object',
+            description: 'WebSocket configuration',
+            properties: {
+              enabled: {
+                type: 'boolean',
+                description: 'Enable WebSocket',
+                default: true
+              },
+              path: {
+                type: 'string',
+                description: 'WebSocket endpoint path',
+                default: '/ws'
+              },
+              pingInterval: {
+                type: 'number',
+                description: 'Ping interval in milliseconds',
+                minimum: 1000,
+                maximum: 60000,
+                default: 30000
+              },
+              maxConnections: {
+                type: 'number',
+                description: 'Maximum WebSocket connections',
+                minimum: 1,
+                maximum: 1000,
+                default: 100
+              },
+              reconnectAttempts: {
+                type: 'number',
+                description: 'Reconnection attempts',
+                minimum: 0,
+                maximum: 10,
+                default: 3
+              },
+              reconnectDelay: {
+                type: 'number',
+                description: 'Reconnection delay in milliseconds',
+                minimum: 1000,
+                maximum: 10000,
+                default: 2000
+              }
+            },
+            default: {}
+          },
+          staticFiles: {
+            type: 'object',
+            description: 'Static files configuration',
+            properties: {
+              enabled: {
+                type: 'boolean',
+                description: 'Enable static file serving',
+                default: true
+              },
+              directory: {
+                type: 'string',
+                description: 'Static files directory',
+                default: 'public'
+              },
+              maxAge: {
+                type: 'number',
+                description: 'Cache max age in seconds',
+                minimum: 0,
+                maximum: 31536000,
+                default: 86400
+              },
+              index: {
+                type: 'boolean',
+                description: 'Serve index.html',
+                default: true
+              },
+              fallback: {
+                type: 'string',
+                description: 'Fallback file for SPA routing'
+              }
+            },
+            default: {}
+          },
+          cors: {
+            type: 'object',
+            description: 'CORS configuration',
+            properties: {
+              enabled: {
+                type: 'boolean',
+                description: 'Enable CORS',
+                default: true
+              },
+              origin: {
+                type: ['string', 'array'],
+                description: 'Allowed origins',
+                default: '*'
+              },
+              methods: {
+                type: 'array',
+                description: 'Allowed HTTP methods',
+                items: { type: 'string' },
+                default: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+              },
+              allowedHeaders: {
+                type: 'array',
+                description: 'Allowed headers',
+                items: { type: 'string' },
+                default: ['Content-Type', 'Authorization']
+              },
+              credentials: {
+                type: 'boolean',
+                description: 'Allow credentials',
+                default: false
+              },
+              maxAge: {
+                type: 'number',
+                description: 'Preflight cache duration in seconds',
+                minimum: 0,
+                maximum: 86400,
+                default: 86400
+              }
+            },
+            default: {}
+          },
+          compression: {
+            type: 'object',
+            description: 'Compression configuration',
+            properties: {
+              enabled: {
+                type: 'boolean',
+                description: 'Enable compression',
+                default: true
+              },
+              threshold: {
+                type: 'number',
+                description: 'Minimum response size to compress in bytes',
+                minimum: 0,
+                maximum: 1048576,
+                default: 1024
+              },
+              level: {
+                type: 'number',
+                description: 'Compression level (0-9)',
+                minimum: -1,
+                maximum: 9,
+                default: 6
+              }
+            },
+            default: {}
+          },
+          security: {
+            type: 'object',
+            description: 'Security configuration',
+            properties: {
+              helmet: {
+                type: 'boolean',
+                description: 'Enable Helmet security headers',
+                default: true
+              },
+              rateLimit: {
+                type: 'object',
+                description: 'Rate limiting configuration',
+                properties: {
+                  enabled: {
+                    type: 'boolean',
+                    description: 'Enable rate limiting',
+                    default: true
+                  },
+                  windowMs: {
+                    type: 'number',
+                    description: 'Time window in milliseconds',
+                    minimum: 60000,
+                    maximum: 3600000,
+                    default: 900000
+                  },
+                  max: {
+                    type: 'number',
+                    description: 'Maximum requests per window',
+                    minimum: 1,
+                    maximum: 1000,
+                    default: 100
+                  }
+                },
+                default: {}
+              },
+              xssFilter: {
+                type: 'boolean',
+                description: 'Enable XSS filter',
+                default: true
+              },
+              noSniff: {
+                type: 'boolean',
+                description: 'Enable no-sniff',
+                default: true
+              },
+              hidePoweredBy: {
+                type: 'boolean',
+                description: 'Hide X-Powered-By header',
+                default: true
+              }
+            },
+            default: {}
+          },
+          logging: {
+            type: 'object',
+            description: 'Server logging configuration',
+            properties: {
+              enabled: {
+                type: 'boolean',
+                description: 'Enable server logging',
+                default: true
+              },
+              level: {
+                type: 'string',
+                description: 'Log level',
+                enum: ['error', 'warn', 'info', 'debug'],
+                default: 'info'
+              },
+              format: {
+                type: 'string',
+                description: 'Log format',
+                enum: ['combined', 'common', 'dev', 'short', 'tiny'],
+                default: 'combined'
+              },
+              file: {
+                type: 'string',
+                description: 'Log file path'
+              },
+              maxSize: {
+                type: 'number',
+                description: 'Maximum log file size in bytes',
+                minimum: 1048576,
+                maximum: 1073741824,
+                default: 10485760
+              }
+            },
+            default: {}
+          }
+        },
+        default: {}
+      },
       paths: {
         type: 'object',
         description: 'Path configuration',

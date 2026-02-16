@@ -149,6 +149,9 @@ export const AgentConfigSchema = z.object({
 
 export type AgentConfig = z.infer<typeof AgentConfigSchema>
 
+// 服务器配置（从server-schema导入）
+import { ServerConfigSchema } from '../config/server-schema.js'
+
 // 主配置schema
 export const ConfigSchema = z.object({
   $schema: z.string().optional(),
@@ -156,6 +159,7 @@ export const ConfigSchema = z.object({
   agent: AgentConfigSchema.default({}),
   testing: TestingConfigSchema.default({}),
   git: GitConfigSchema.default({}),
+  server: ServerConfigSchema.default({}),
   paths: z.object({
     progressFile: z.string().default('claude-progress.txt'),
     featureListFile: z.string().default('feature-list.json'),
@@ -234,6 +238,60 @@ export const DEFAULT_CONFIG: Config = {
     commitTemplate: 'feat: {description}\n\n- 实现功能: {details}\n- 分类: {category}\n- 测试状态: {testStatus}\n- 相关文件: {files}',
     commitOnTestPass: true,
     tagReleases: false
+  },
+  server: {
+    enabled: false,
+    port: 3000,
+    host: 'localhost',
+    basePath: '/',
+    trustProxy: false,
+    timeout: 30000,
+    keepAliveTimeout: 5000,
+    maxHeadersCount: 2000,
+    websocket: {
+      enabled: true,
+      path: '/ws',
+      pingInterval: 30000,
+      maxConnections: 100,
+      reconnectAttempts: 3,
+      reconnectDelay: 2000
+    },
+    staticFiles: {
+      enabled: true,
+      directory: 'public',
+      maxAge: 86400,
+      index: true
+    },
+    cors: {
+      enabled: true,
+      origin: '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: false,
+      maxAge: 86400
+    },
+    compression: {
+      enabled: true,
+      threshold: 1024,
+      level: 6
+    },
+    security: {
+      helmet: true,
+      rateLimit: {
+        enabled: true,
+        windowMs: 900000,
+        max: 100
+      },
+      xssFilter: true,
+      noSniff: true,
+      hidePoweredBy: true
+    },
+    logging: {
+      enabled: true,
+      level: 'info',
+      format: 'combined',
+      maxSize: 10485760
+    }
   },
   paths: {
     progressFile: 'claude-progress.txt',

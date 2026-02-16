@@ -1,0 +1,15 @@
+{
+  "$schema": "https://agent-cli.dev/schemas/config.schema.json",
+  "project": {
+    "name": "test-server",
+    "description": "这是一个用于测试agent-cli Web服务器功能的测试项目",
+    "type": "web-app",
+    "techStack": ["react", "typescript", "tailwind"],
+    "version": "1.0.0"
+  },
+  "server": {
+    "enabled": true,
+    "port": 3001,
+    "host": "localhost"
+  }
+}

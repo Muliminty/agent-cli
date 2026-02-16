@@ -660,6 +660,81 @@ async function loadCommandModules(): Promise<CommandModule[]> {
       }
     })
 
+    // 添加服务器启动命令
+    commands.push({
+      command: 'serve',
+      description: '启动Web服务器 - 提供可视化仪表板和API服务',
+      options: [
+        {
+          flags: '-p, --port <port>',
+          description: '服务器端口',
+          defaultValue: '3000'
+        },
+        {
+          flags: '-h, --host <host>',
+          description: '服务器主机',
+          defaultValue: 'localhost'
+        },
+        {
+          flags: '-b, --base-path <path>',
+          description: 'API基础路径',
+          defaultValue: '/'
+        },
+        {
+          flags: '--no-websocket',
+          description: '禁用WebSocket'
+        },
+        {
+          flags: '--websocket-path <path>',
+          description: 'WebSocket端点路径',
+          defaultValue: '/ws'
+        },
+        {
+          flags: '--static-dir <dir>',
+          description: '静态文件目录',
+          defaultValue: 'public'
+        },
+        {
+          flags: '--no-static',
+          description: '禁用静态文件服务'
+        },
+        {
+          flags: '--no-cors',
+          description: '禁用CORS'
+        },
+        {
+          flags: '--no-compression',
+          description: '禁用压缩'
+        },
+        {
+          flags: '--watch',
+          description: '监控文件变化并自动重启'
+        },
+        {
+          flags: '--open',
+          description: '启动后自动打开浏览器'
+        },
+        {
+          flags: '-v, --verbose',
+          description: '详细模式'
+        },
+        {
+          flags: '--debug',
+          description: '调试模式'
+        }
+      ],
+      action: async (options: any) => {
+        try {
+          // 动态导入处理函数以避免循环依赖
+          const { handleServeCommand } = await import('./commands/serve.js')
+          await handleServeCommand(options)
+        } catch (error) {
+          console.error('❌ 执行serve命令失败:', error)
+          throw error
+        }
+      }
+    })
+
   } catch (error) {
     console.error('❌ 加载命令模块失败:', error)
   }
@@ -857,6 +932,9 @@ export async function main() {
       console.log('  $ agent-cli config --reset')
       console.log('  $ agent-cli reset --dry-run')
       console.log('  $ agent-cli reset --type features --backup')
+      console.log('  $ agent-cli serve')
+      console.log('  $ agent-cli serve --port 8080 --host 0.0.0.0')
+      console.log('  $ agent-cli serve --watch --open')
       console.log('\n📁 配置文件: agent.config.json')
       console.log('🌐 更多信息: https://github.com/your-repo/agent-cli')
     })

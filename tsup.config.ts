@@ -23,7 +23,12 @@ export default defineConfig({
     'simple-git',
     'puppeteer',
     'execa',
-    'boxen'
+    'boxen',
+    'express',
+    'cors',
+    'compression',
+    'ws',
+    'open'
   ],
   // 排除测试文件和类型声明文件
   ignore: [
