@@ -1,0 +1,763 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>agent-cli - 智能项目管理平台</title>
+
+    <!-- 样式表 -->
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <!-- 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- 代码高亮 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+
+    <style>
+        /* 临时样式，等待组件加载 */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载屏幕 -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <h2>正在加载 agent-cli...</h2>
+        <p>初始化应用组件</p>
+    </div>
+
+    <!-- 应用容器 -->
+    <div class="app-container" id="appContainer" style="display: none;">
+        <!-- 侧边栏 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="sidebar-logo-icon">🚀</span>
+                    <span class="sidebar-logo-text">agent-cli</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">主要</div>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link active" data-view="dashboard">
+                                <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
+                                <span class="nav-text">仪表板</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-view="projects">
+                                <span class="nav-icon"><i class="fas fa-folder"></i></span>
+                                <span class="nav-text">项目管理</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-view="wizard">
+                                <span class="nav-icon"><i class="fas fa-magic"></i></span>
+                                <span class="nav-text">项目向导</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">开发工具</div>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-view="chat">
+                                <span class="nav-icon"><i class="fas fa-comments"></i></span>
+                                <span class="nav-text">AI问答</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-view="code">
+                                <span class="nav-icon"><i class="fas fa-code"></i></span>
+                                <span class="nav-text">代码编辑器</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-view="testing">
+                                <span class="nav-icon"><i class="fas fa-vial"></i></span>
+                                <span class="nav-text">测试工具</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-view="tasks">
+                                <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+                                <span class="nav-text">任务列表</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">系统</div>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-view="settings">
+                                <span class="nav-icon"><i class="fas fa-cog"></i></span>
+                                <span class="nav-text">设置</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/api/version" class="nav-link" target="_blank">
+                                <span class="nav-icon"><i class="fas fa-book"></i></span>
+                                <span class="nav-text">API文档</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/health" class="nav-link" target="_blank">
+                                <span class="nav-icon"><i class="fas fa-heartbeat"></i></span>
+                                <span class="nav-text">健康检查</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="d-flex align-items-center justify-content-between">
+                    <button class="btn btn-sm btn-outline" id="themeToggle">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <span class="font-sm text-tertiary">v1.0.0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="topbar">
+                <div class="breadcrumb" id="breadcrumb">
+                    <span class="breadcrumb-item">仪表板</span>
+                </div>
+
+                <div class="topbar-actions">
+                    <button class="btn btn-sm btn-outline" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>刷新</span>
+                    </button>
+
+                    <div class="status-indicator status-info" id="connectionStatus">
+                        <span class="status-dot"></span>
+                        <span>连接中...</span>
+                    </div>
+
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline" id="userMenu">
+                            <i class="fas fa-user"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 内容区域 -->
+            <div class="content-wrapper">
+                <!-- 动态内容区域 -->
+                <div id="contentArea">
+                    <!-- 仪表板视图 -->
+                    <div class="view-content" data-view="dashboard">
+                        <div class="page-header">
+                            <h1 class="page-title">仪表板</h1>
+                            <p class="page-subtitle">项目概览和系统状态</p>
+                        </div>
+
+                        <div class="dashboard-grid">
+                            <!-- 项目统计 -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">项目统计</h3>
+                                    <span class="card-icon"><i class="fas fa-project-diagram"></i></span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span>总项目数</span>
+                                        <span class="font-bold" id="totalProjects">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span>运行中</span>
+                                        <span class="font-bold text-success" id="runningProjects">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>最近活动</span>
+                                        <span class="font-sm text-tertiary" id="lastActivity">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 系统状态 -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">系统状态</h3>
+                                    <span class="card-icon"><i class="fas fa-server"></i></span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>CPU使用率</span>
+                                            <span id="cpuUsage">0%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" id="cpuProgress" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>内存使用</span>
+                                            <span id="memoryUsage">0 MB</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" id="memoryProgress" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>运行时间</span>
+                                        <span class="font-sm text-tertiary" id="uptime">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 快速操作 -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">快速操作</h3>
+                                    <span class="card-icon"><i class="fas fa-bolt"></i></span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex flex-column gap-2">
+                                        <button class="btn btn-primary" id="createProjectBtn">
+                                            <i class="fas fa-plus"></i>
+                                            新建项目
+                                        </button>
+                                        <button class="btn btn-outline" id="openChatBtn">
+                                            <i class="fas fa-comment"></i>
+                                            开始对话
+                                        </button>
+                                        <button class="btn btn-outline" id="runTestsBtn">
+                                            <i class="fas fa-play"></i>
+                                            运行测试
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 最近活动 -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">最近活动</h3>
+                                    <span class="card-icon"><i class="fas fa-history"></i></span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex flex-column gap-2" id="recentActivities">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-info-circle text-info"></i>
+                                            <span class="font-sm">系统正在初始化...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 项目列表 -->
+                        <div class="mt-5">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h3>最近项目</h3>
+                                <a href="#" class="btn btn-sm btn-outline" data-view="projects">
+                                    查看全部
+                                </a>
+                            </div>
+
+                            <div class="table-container">
+                                <table class="table" id="recentProjectsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>项目名称</th>
+                                            <th>类型</th>
+                                            <th>状态</th>
+                                            <th>最后更新</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="5" class="text-center text-tertiary">
+                                                加载项目列表...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 任务列表视图 -->
+                    <div class="view-content" data-view="tasks" style="display: none;">
+                        <div class="page-header">
+                            <h1 class="page-title">任务列表</h1>
+                            <p class="page-subtitle">实时监控和管理后台任务</p>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline" id="refreshTasksBtn">
+                                    <i class="fas fa-sync-alt"></i>
+                                    刷新
+                                </button>
+                                <button class="btn btn-sm btn-outline" id="clearCompletedTasksBtn">
+                                    <i class="fas fa-trash"></i>
+                                    清理已完成
+                                </button>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="form-group mb-0">
+                                    <label class="form-label mr-2">状态筛选:</label>
+                                    <select class="form-select form-select-sm" id="taskStatusFilter">
+                                        <option value="all">全部任务</option>
+                                        <option value="pending">等待中</option>
+                                        <option value="running">运行中</option>
+                                        <option value="completed">已完成</option>
+                                        <option value="failed">失败</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-0">
+                                    <label class="form-label mr-2">排序:</label>
+                                    <select class="form-select form-select-sm" id="taskSort">
+                                        <option value="created_desc">最新创建</option>
+                                        <option value="created_asc">最早创建</option>
+                                        <option value="updated_desc">最近更新</option>
+                                        <option value="priority_desc">优先级降序</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 任务统计 -->
+                        <div class="row mb-4" id="taskStats">
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="totalTasks">0</div>
+                                    <div class="stat-label">总任务数</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="stat-value text-primary" id="runningTasks">0</div>
+                                    <div class="stat-label">运行中</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="stat-value text-success" id="completedTasks">0</div>
+                                    <div class="stat-label">已完成</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="stat-value text-danger" id="failedTasks">0</div>
+                                    <div class="stat-label">失败</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 任务列表 -->
+                        <div class="table-container">
+                            <table class="table" id="tasksTable">
+                                <thead>
+                                    <tr>
+                                        <th width="40">
+                                            <input type="checkbox" id="selectAllTasks">
+                                        </th>
+                                        <th>任务名称</th>
+                                        <th>类型</th>
+                                        <th>状态</th>
+                                        <th>进度</th>
+                                        <th>创建时间</th>
+                                        <th>更新时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tasksTableBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-tertiary">
+                                            加载任务列表...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 任务详情面板 -->
+                        <div class="task-detail-panel" id="taskDetailPanel" style="display: none;">
+                            <div class="panel-header">
+                                <h4 class="panel-title">任务详情</h4>
+                                <button class="btn btn-sm btn-outline" id="closeTaskDetail">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="panel-body">
+                                <div id="taskDetailContent">
+                                    <!-- 动态加载任务详情 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 其他视图将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 通知容器 -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- 连接状态指示器 -->
+    <div class="connection-status disconnected" id="connectionIndicator">
+        <i class="fas fa-plug"></i>
+        <span>连接中...</span>
+    </div>
+
+    <!-- JavaScript文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/api-client.js"></script>
+    <script src="/js/project-wizard.js"></script>
+    <script src="/js/chat-interface.js"></script>
+    <script src="/js/project-manager.js"></script>
+    <script src="/js/task-manager.js"></script>
+    <script src="/js/realtime-updater.js"></script>
+    <script src="/js/error-handler.js"></script>
+
+    <script>
+        // 初始化UI交互
+        document.addEventListener('DOMContentLoaded', function() {
+            // 侧边栏切换
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+            });
+
+            // 主题切换
+            const themeToggle = document.getElementById('themeToggle');
+            themeToggle.addEventListener('click', function() {
+                app.toggleTheme();
+            });
+
+            // 导航链接点击
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // 移除所有active类
+                    document.querySelectorAll('.nav-link').forEach(l => {
+                        l.classList.remove('active');
+                    });
+
+                    // 添加active类到当前链接
+                    this.classList.add('active');
+
+                    // 切换视图
+                    const view = this.getAttribute('data-view');
+                    if (view) {
+                        app.setCurrentView(view);
+                    }
+                });
+            });
+
+            // 刷新按钮
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.addEventListener('click', function() {
+                app.emit('refreshData');
+            });
+
+            // 快速操作按钮
+            document.getElementById('createProjectBtn').addEventListener('click', function() {
+                app.setCurrentView('wizard');
+            });
+
+            document.getElementById('openChatBtn').addEventListener('click', function() {
+                app.setCurrentView('chat');
+            });
+
+            document.getElementById('runTestsBtn').addEventListener('click', function() {
+                app.addNotification({
+                    type: 'info',
+                    title: '测试运行',
+                    message: '正在准备运行测试...'
+                });
+            });
+
+            // 监听应用事件
+            app.on('websocketConnected', function() {
+                const indicator = document.getElementById('connectionIndicator');
+                indicator.className = 'connection-status connected';
+                indicator.innerHTML = '<i class="fas fa-plug"></i><span>已连接</span>';
+            });
+
+            app.on('websocketDisconnected', function() {
+                const indicator = document.getElementById('connectionIndicator');
+                indicator.className = 'connection-status disconnected';
+                indicator.innerHTML = '<i class="fas fa-plug"></i><span>已断开</span>';
+            });
+
+            app.on('viewChanged', function(view) {
+                // 更新面包屑
+                const breadcrumb = document.getElementById('breadcrumb');
+                let breadcrumbText = '';
+
+                switch(view) {
+                    case 'dashboard':
+                        breadcrumbText = '仪表板';
+                        break;
+                    case 'projects':
+                        breadcrumbText = '项目管理';
+                        break;
+                    case 'wizard':
+                        breadcrumbText = '项目向导';
+                        break;
+                    case 'chat':
+                        breadcrumbText = 'AI问答';
+                        break;
+                    case 'tasks':
+                        breadcrumbText = '任务列表';
+                        break;
+                    case 'settings':
+                        breadcrumbText = '设置';
+                        break;
+                    default:
+                        breadcrumbText = view;
+                }
+
+                breadcrumb.innerHTML = `<span class="breadcrumb-item">${breadcrumbText}</span>`;
+
+                // 更新导航链接
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    if (link.getAttribute('data-view') === view) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                // 加载视图内容
+                loadViewContent(view);
+            });
+
+            // 隐藏加载屏幕
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'flex';
+            }, 1000);
+
+            // 初始化代码高亮
+            hljs.highlightAll();
+        });
+
+        // 加载视图内容
+        function loadViewContent(view) {
+            const contentArea = document.getElementById('contentArea');
+
+            // 这里应该根据视图动态加载内容
+            // 暂时只显示默认内容
+            document.querySelectorAll('.view-content').forEach(el => {
+                el.style.display = 'none';
+            });
+
+            const viewEl = document.querySelector(`[data-view="${view}"]`);
+            if (viewEl) {
+                viewEl.style.display = 'block';
+            }
+
+            // 触发视图加载事件
+            app.emit('viewLoaded', view);
+        }
+
+        // 工具函数：更新最近活动
+        function updateRecentActivity(activity) {
+            const container = document.getElementById('recentActivities');
+            const activityEl = document.createElement('div');
+            activityEl.className = 'd-flex align-items-center gap-2';
+
+            let icon = 'fa-info-circle';
+            let color = 'text-info';
+
+            switch(activity.type) {
+                case 'success':
+                    icon = 'fa-check-circle';
+                    color = 'text-success';
+                    break;
+                case 'error':
+                    icon = 'fa-exclamation-circle';
+                    color = 'text-danger';
+                    break;
+                case 'warning':
+                    icon = 'fa-exclamation-triangle';
+                    color = 'text-warning';
+                    break;
+            }
+
+            activityEl.innerHTML = `
+                <i class="fas ${icon} ${color}"></i>
+                <span class="font-sm">${activity.message}</span>
+                <span class="font-sm text-tertiary ml-auto">${formatTime(activity.timestamp)}</span>
+            `;
+
+            container.insertBefore(activityEl, container.firstChild);
+
+            // 限制最多显示5条
+            if (container.children.length > 5) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        // 工具函数：格式化时间
+        function formatTime(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+
+            if (diff < 60000) { // 1分钟内
+                return '刚刚';
+            } else if (diff < 3600000) { // 1小时内
+                return Math.floor(diff / 60000) + '分钟前';
+            } else if (diff < 86400000) { // 1天内
+                return Math.floor(diff / 3600000) + '小时前';
+            } else {
+                return Math.floor(diff / 86400000) + '天前';
+            }
+        }
+
+        // 监听通知事件
+        app.on('notificationAdded', function(notification) {
+            const container = document.getElementById('notificationContainer');
+            const notificationEl = document.createElement('div');
+            notificationEl.className = `notification notification-${notification.type}`;
+            notificationEl.id = `notification-${notification.id}`;
+
+            let icon = 'fa-info-circle';
+            switch(notification.type) {
+                case 'success':
+                    icon = 'fa-check-circle';
+                    break;
+                case 'error':
+                    icon = 'fa-exclamation-circle';
+                    break;
+                case 'warning':
+                    icon = 'fa-exclamation-triangle';
+                    break;
+            }
+
+            notificationEl.innerHTML = `
+                <div class="notification-icon">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${notification.title}</div>
+                    <div class="notification-message">${notification.message}</div>
+                </div>
+                <button class="notification-close" onclick="app.removeNotification('${notification.id}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            container.appendChild(notificationEl);
+
+            // 自动移除
+            if (notification.duration > 0) {
+                setTimeout(() => {
+                    const el = document.getElementById(`notification-${notification.id}`);
+                    if (el) {
+                        el.style.animation = 'slideIn 0.3s ease reverse';
+                        setTimeout(() => el.remove(), 300);
+                    }
+                }, notification.duration);
+            }
+        });
+
+        app.on('notificationRemoved', function(notification) {
+            const el = document.getElementById(`notification-${notification.id}`);
+            if (el) {
+                el.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => el.remove(), 300);
+            }
+        });
+
+        // 模拟系统状态更新
+        function updateSystemStatus() {
+            // 模拟CPU使用率
+            const cpuUsage = Math.floor(Math.random() * 30) + 10;
+            document.getElementById('cpuUsage').textContent = cpuUsage + '%';
+            document.getElementById('cpuProgress').style.width = cpuUsage + '%';
+
+            // 模拟内存使用
+            const memoryUsage = Math.floor(Math.random() * 1024) + 512;
+            document.getElementById('memoryUsage').textContent = memoryUsage + ' MB';
+            document.getElementById('memoryProgress').style.width = Math.min(100, (memoryUsage / 2048) * 100) + '%';
+
+            // 模拟运行时间
+            const uptime = Math.floor(Math.random() * 86400) + 3600;
+            const hours = Math.floor(uptime / 3600);
+            const minutes = Math.floor((uptime % 3600) / 60);
+            document.getElementById('uptime').textContent = `${hours}小时${minutes}分钟`;
+
+            // 模拟最近活动
+            const activities = [
+                '项目 "my-app" 创建成功',
+                'AI问答会话开始',
+                '系统检查完成',
+                'WebSocket连接已建立',
+                '配置文件已更新'
+            ];
+
+            const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+            updateRecentActivity({
+                type: ['info', 'success', 'warning'][Math.floor(Math.random() * 3)],
+                message: randomActivity,
+                timestamp: Date.now() - Math.floor(Math.random() * 3600000)
+            });
+        }
+
+        // 定期更新系统状态
+        setInterval(updateSystemStatus, 5000);
+        updateSystemStatus(); // 初始更新
+    </script>
+</body>
+</html>
+  

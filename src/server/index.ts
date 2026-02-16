@@ -9,11 +9,16 @@ import compression from 'compression'
 import { createLogger } from '../utils/logger.js'
 import type { Config } from '../types/config.js'
 import projectRouter from './api/project.js'
+import projectManagementRouter from './api/project-management.js'
+import projectWizardRouter from './api/project-wizard.js'
+import chatRouter from './api/chat.js'
+import cliCommandsRouter from './api/cli-commands.js'
 import { WebSocketServer } from 'ws'
 import { createServer as createHttpServer, type Server as HttpServer } from 'http'
 import { createServer as createHttpsServer, type Server as HttpsServer } from 'https'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { createWebSocketHandlers } from './websocket-handlers.js'
 
 const logger = createLogger('server')
 
@@ -148,33 +153,16 @@ function createWebSocketServer(httpServer: HttpServer | HttpsServer, config: Con
     path: config.websocket.path
   })
 
-  const connections = new Set<WebSocket>()
-  // 客户端ID到WebSocket连接的映射
-  const clientConnections = new Map<string, WebSocket>()
-  // 客户端订阅映射：clientId -> Set<eventType>
-  const subscriptions = new Map<string, Set<string>>()
+  // 创建WebSocket处理器
+  const handlers = createWebSocketHandlers({
+    pingInterval: config.websocket.pingInterval,
+    maxConnections: config.websocket.maxConnections,
+    reconnectAttempts: config.websocket.reconnectAttempts,
+    reconnectDelay: config.websocket.reconnectDelay
+  })
 
   wsServer.on('connection', (ws, req) => {
-    const clientId = Math.random().toString(36).substring(7)
-    const clientIp = req.socket.remoteAddress || 'unknown'
-
-    logger.info('WebSocket客户端已连接', { clientId, clientIp })
-
-    connections.add(ws)
-    // 存储客户端ID到连接的映射
-    clientConnections.set(clientId, ws)
-    // 初始化客户端的订阅集合
-    subscriptions.set(clientId, new Set())
-
-    // 发送欢迎消息
-    ws.send(JSON.stringify({
-      type: 'welcome',
-      data: {
-        clientId,
-        timestamp: Date.now(),
-        message: '已连接到agent-cli服务器'
-      }
-    }))
+    const clientId = handlers.handleConnection(ws, req)
 
     // 心跳检测
     const pingInterval = setInterval(() => {
@@ -183,20 +171,8 @@ function createWebSocketServer(httpServer: HttpServer | HttpsServer, config: Con
       }
     }, config.websocket.pingInterval)
 
-    ws.on('message', (data) => {
-      try {
-        const message = JSON.parse(data.toString())
-        handleWebSocketMessage(ws, message, clientId, subscriptions)
-      } catch (error) {
-        logger.error('WebSocket消息处理失败', { error, clientId })
-      }
-    })
-
     ws.on('close', () => {
       logger.info('WebSocket客户端已断开', { clientId })
-      connections.delete(ws)
-      clientConnections.delete(clientId)
-      subscriptions.delete(clientId)
       clearInterval(pingInterval)
     })
 
@@ -205,106 +181,29 @@ function createWebSocketServer(httpServer: HttpServer | HttpsServer, config: Con
     })
   })
 
-  // 广播消息到所有客户端
-  const broadcast = (message: any) => {
-    const data = JSON.stringify(message)
-    connections.forEach(client => {
-      if (client.readyState === client.OPEN) {
-        client.send(data)
-      }
-    })
-  }
+  // 存储处理器函数供外部使用
+  ;(wsServer as any).broadcast = handlers.broadcast
+  ;(wsServer as any).broadcastToSubscribers = handlers.broadcastToSubscribers
+  ;(wsServer as any).getConnectionStats = handlers.getConnectionStats
+  ;(wsServer as any).cleanupInactiveConnections = handlers.cleanupInactiveConnections
 
-  // 广播消息到订阅特定事件的客户端
-  const broadcastToSubscribers = (eventType: string, message: any) => {
-    const data = JSON.stringify({
-      type: eventType,
-      data: message,
-      timestamp: Date.now()
-    })
+  // 定期清理不活跃连接
+  const cleanupInterval = setInterval(() => {
+    const cleaned = handlers.cleanupInactiveConnections(10 * 60 * 1000) // 10分钟
+    if (cleaned > 0) {
+      logger.debug('清理不活跃连接', { cleaned })
+    }
+  }, 5 * 60 * 1000) // 每5分钟检查一次
 
-    // 查找所有订阅了该事件的客户端
-    let sentCount = 0
-    subscriptions.forEach((clientEvents, clientId) => {
-      if (clientEvents.has(eventType)) {
-        // 通过clientId找到对应的WebSocket连接
-        const clientWs = clientConnections.get(clientId)
-        if (clientWs && clientWs.readyState === clientWs.OPEN) {
-          clientWs.send(data)
-          sentCount++
-        }
-      }
-    })
-
-    logger.debug(`向订阅者广播事件`, { eventType, sentCount, totalSubscriptions: subscriptions.size })
-  }
-
-  // 存储广播函数供外部使用
-  ;(wsServer as any).broadcast = broadcast
-  ;(wsServer as any).broadcastToSubscribers = broadcastToSubscribers
+  wsServer.on('close', () => {
+    clearInterval(cleanupInterval)
+  })
 
   logger.info('WebSocket服务器已启动', { path: config.websocket.path })
 
   return wsServer
 }
 
-/**
- * 处理WebSocket消息
- */
-function handleWebSocketMessage(
-  ws: WebSocket,
-  message: any,
-  clientId: string,
-  subscriptions: Map<string, Set<string>>
-): void {
-  const { type, data } = message
-
-  switch (type) {
-    case 'ping':
-      ws.send(JSON.stringify({ type: 'pong', data: { timestamp: Date.now() } }))
-      break
-    case 'subscribe':
-      logger.debug('客户端订阅事件', { clientId, events: data.events })
-      // 实现事件订阅逻辑
-      if (data.events && Array.isArray(data.events)) {
-        const clientSubscriptions = subscriptions.get(clientId)
-        if (clientSubscriptions) {
-          data.events.forEach((event: string) => {
-            clientSubscriptions.add(event)
-          })
-          ws.send(JSON.stringify({
-            type: 'subscription_updated',
-            data: {
-              subscribed: Array.from(clientSubscriptions),
-              message: '订阅成功'
-            }
-          }))
-        }
-      }
-      break
-    case 'unsubscribe':
-      logger.debug('客户端取消订阅事件', { clientId, events: data.events })
-      // 实现事件取消订阅逻辑
-      if (data.events && Array.isArray(data.events)) {
-        const clientSubscriptions = subscriptions.get(clientId)
-        if (clientSubscriptions) {
-          data.events.forEach((event: string) => {
-            clientSubscriptions.delete(event)
-          })
-          ws.send(JSON.stringify({
-            type: 'subscription_updated',
-            data: {
-              subscribed: Array.from(clientSubscriptions),
-              message: '取消订阅成功'
-            }
-          }))
-        }
-      }
-      break
-    default:
-      logger.warn('未知的WebSocket消息类型', { clientId, type })
-  }
-}
 
 /**
  * 构建完整路径，处理basePath为'/'的情况
@@ -344,6 +243,18 @@ function setupRoutes(app: Express, config: Config['server'], cwd: string): void 
 
   // 项目API路由
   app.use(buildPath(basePath, '/api/project'), projectRouter)
+
+  // 项目管理API路由（创建、初始化、管理）
+  app.use(buildPath(basePath, '/api/project-management'), projectManagementRouter)
+
+  // 项目向导API路由（可视化项目创建）
+  app.use(buildPath(basePath, '/api/project-wizard'), projectWizardRouter)
+
+  // 问答系统API路由（AI聊天功能）
+  app.use(buildPath(basePath, '/api/chat'), chatRouter)
+
+  // CLI命令API路由（执行CLI命令）
+  app.use(buildPath(basePath, '/api/cli'), cliCommandsRouter)
 
   // 静态文件服务
   if (staticFiles.enabled) {
