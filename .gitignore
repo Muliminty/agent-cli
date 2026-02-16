@@ -46,3 +46,7 @@ feature-list.json
 # Claude Code 本地配置
 .claude/settings.local.json
 .claude/
+
+# 备份文件和临时目录
+agent.config.json.backup.*
+var/
