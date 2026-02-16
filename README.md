@@ -4,13 +4,15 @@
 
 ## 项目状态
 
-**当前阶段**: 第五阶段完善和优化（核心功能已基本完成）
-**进度**: 96.8% (90/93 任务完成)
-**最后更新**: 2026-02-16 (更新用户指南)
+**当前阶段**: 第六阶段闭环Web界面优化
+**进度**: 88.7% (102/115 任务完成)
+**最后更新**: 2026-02-16 (完成Web界面和DeepSeek AI集成)
 
 **测试状态**: ✅ 70个测试用例全部通过
+**AI提供商**: Anthropic (Claude), OpenAI (GPT), DeepSeek
+**Web界面**: ✅ 已实现 (通过 `agent-cli serve` 启动)
 
-**未来计划**: 将添加可视化Web界面（方案C：CLI + 本地Web服务器），使非技术用户也能方便使用
+**已完成功能**: 完整的可视化Web界面、多AI提供商支持、实时任务监控、WebSocket实时通信
 
 ## 项目概述
 
@@ -107,6 +109,35 @@ agent-cli template add ./my-template.md
       "enabled": true,
       "warningThreshold": 0.8,
       "autoSummarize": true
+    },
+    "ai": {
+      "defaultProvider": "anthropic",
+      "defaultModel": "claude-3-5-sonnet",
+      "temperature": 0.7,
+      "maxTokens": 4096,
+      "stream": true,
+      "providers": {
+        "anthropic": {
+          "provider": "anthropic",
+          "apiKey": "${ANTHROPIC_API_KEY}",
+          "enabled": true
+        },
+        "openai": {
+          "provider": "openai",
+          "apiKey": "${OPENAI_API_KEY}",
+          "enabled": true
+        },
+        "deepseek": {
+          "provider": "deepseek",
+          "apiKey": "${DEEPSEEK_API_KEY}",
+          "enabled": true
+        }
+      },
+      "usageStats": {
+        "enabled": true,
+        "trackCosts": true,
+        "currency": "USD"
+      }
     }
   },
   "testing": {

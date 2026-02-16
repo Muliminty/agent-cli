@@ -215,6 +215,7 @@ class AnthropicAdapter extends BaseAIAdapterImpl {
       }
     } catch (error: any) {
       this.handleError(error)
+      throw error // 确保错误被传播
     }
   }
 
@@ -259,6 +260,7 @@ class AnthropicAdapter extends BaseAIAdapterImpl {
       }
     } catch (error: any) {
       this.handleError(error)
+      throw error // 确保错误被传播
     }
   }
 
@@ -341,6 +343,7 @@ class OpenAIAdapter extends BaseAIAdapterImpl {
       }
     } catch (error: any) {
       this.handleError(error)
+      throw error // 确保错误被传播
     }
   }
 
@@ -378,6 +381,7 @@ class OpenAIAdapter extends BaseAIAdapterImpl {
       }
     } catch (error: any) {
       this.handleError(error)
+      throw error // 确保错误被传播
     }
   }
 
@@ -463,6 +467,8 @@ class DeepSeekAdapter extends BaseAIAdapterImpl {
       }
     } catch (error: any) {
       this.handleError(error)
+      throw error // 确保错误被传播
+      throw error // 确保错误被传播
     }
   }
 
@@ -500,6 +506,7 @@ class DeepSeekAdapter extends BaseAIAdapterImpl {
       }
     } catch (error: any) {
       this.handleError(error)
+      throw error // 确保错误被传播
     }
   }
 
@@ -602,7 +609,7 @@ export class AIService implements IAIService {
         return new OpenAIAdapter(config)
       // TODO: 添加更多提供商适配器
       case 'deepseek':
-        // return new DeepSeekAdapter(config)
+        return new DeepSeekAdapter(config)
       case 'zhipu':
         // return new ZhipuAIAdapter(config)
       case 'kimi':
