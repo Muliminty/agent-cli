@@ -423,3 +423,5 @@ export async function createExampleTestSuite(targetDir: string = './tests'): Pro
     throw error;
   }
 }
+
+export { executeTestCommand };

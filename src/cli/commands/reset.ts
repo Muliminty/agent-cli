@@ -349,8 +349,8 @@ async function confirmReset(
 
   // 交互式确认
   if (options.interactive !== false) {
-    const { promptConfirm } = await import('../../utils/prompt-utils.js')
-    const confirmed = await promptConfirm({
+    const { getPromptUtils } = await import('../../utils/prompt-utils.js')
+    const confirmed = await getPromptUtils().confirm({
       message: `确认执行 ${resetType} 重置？`,
       defaultValue: false
     })

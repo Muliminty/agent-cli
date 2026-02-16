@@ -230,8 +230,8 @@ async function handleSetConfig(options: ConfigCommandOptions, logger: ReturnType
 
   // 确认操作（非交互式模式下自动确认）
   if (options.interactive !== false) {
-    const { promptConfirm } = await import('../../utils/prompt-utils.js')
-    const confirmed = await promptConfirm({
+    const { getPromptUtils } = await import('../../utils/prompt-utils.js')
+    const confirmed = await getPromptUtils().confirm({
       message: '确认保存配置更改？',
       defaultValue: true
     })
@@ -283,8 +283,8 @@ async function handleResetConfig(options: ConfigCommandOptions, logger: ReturnTy
 
   // 确认操作
   if (options.interactive !== false) {
-    const { promptConfirm } = await import('../../utils/prompt-utils.js')
-    const confirmed = await promptConfirm({
+    const { getPromptUtils } = await import('../../utils/prompt-utils.js')
+    const confirmed = await getPromptUtils().confirm({
       message: `确认重置 ${changedPaths.length} 个配置项到默认值？`,
       defaultValue: false
     })

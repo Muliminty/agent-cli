@@ -21,6 +21,9 @@ import { createLogger } from '../../utils/logger.js'
 import { loadConfig } from '../../config/loader.js'
 import { AgentRegistry } from '../../core/agent/base.js'
 import { getPromptUtils } from '../../utils/prompt-utils.js'
+
+// 为了方便使用，创建别名
+const promptUtils = getPromptUtils()
 import type { AgentContext } from '../../core/agent/base.js'
 import type { Config } from '../../config/schema.js'
 
@@ -172,7 +175,7 @@ async function collectProjectInfo(
     try {
       // 项目名称
       if (!finalProjectName) {
-        finalProjectName = await promptText({
+        finalProjectName = await promptUtils.text({
           message: '项目名称',
           defaultValue: 'my-project',
           required: true,
@@ -191,7 +194,7 @@ async function collectProjectInfo(
       // 项目路径
       if (!finalProjectPath) {
         const defaultPath = path.join(process.cwd(), finalProjectName!)
-        finalProjectPath = await promptText({
+        finalProjectPath = await promptUtils.text({
           message: '项目路径',
           defaultValue: defaultPath,
           required: true,
@@ -214,7 +217,7 @@ async function collectProjectInfo(
 
       // 项目描述
       if (!finalDescription) {
-        finalDescription = await promptText({
+        finalDescription = await promptUtils.text({
           message: '项目描述',
           defaultValue: `一个基于 ${finalTemplate} 模板的项目`,
           required: false
@@ -222,7 +225,7 @@ async function collectProjectInfo(
       }
 
       // 项目模板
-      const templateChoice = await promptSelect({
+      const templateChoice = await promptUtils.select({
         message: '选择项目模板',
         choices: [
           { name: 'Web应用 (React + TypeScript + Vite)', value: 'web-app' },
@@ -235,7 +238,7 @@ async function collectProjectInfo(
 
       // 是否初始化Git仓库
       if (options.git === undefined) { // 未通过命令行指定
-        finalInitGit = await promptConfirm({
+        finalInitGit = await promptUtils.confirm({
           message: '初始化Git仓库',
           defaultValue: true
         })
@@ -243,7 +246,7 @@ async function collectProjectInfo(
 
       // 是否创建初始功能列表
       if (options['skip-features'] === undefined) { // 未通过命令行指定
-        finalCreateFeatureList = await promptConfirm({
+        finalCreateFeatureList = await promptUtils.confirm({
           message: '创建初始功能列表',
           defaultValue: true
         })
@@ -252,7 +255,7 @@ async function collectProjectInfo(
       // Git配置（如果初始化Git仓库）
       if (finalInitGit) {
         if (!finalGitUserName) {
-          finalGitUserName = await promptText({
+          finalGitUserName = await promptUtils.text({
             message: 'Git用户名 (用于初始提交)',
             defaultValue: '',
             required: false
@@ -260,7 +263,7 @@ async function collectProjectInfo(
         }
 
         if (!finalGitUserEmail) {
-          finalGitUserEmail = await promptText({
+          finalGitUserEmail = await promptUtils.text({
             message: 'Git用户邮箱 (用于初始提交)',
             defaultValue: '',
             required: false,
