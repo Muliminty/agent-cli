@@ -32,6 +32,7 @@ Thumbs.db
 
 # 测试相关
 puppeteer/.local-chromium/
+test-reports/
 
 # 临时文件
 tmp/
