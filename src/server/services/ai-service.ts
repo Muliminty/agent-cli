@@ -468,7 +468,6 @@ class DeepSeekAdapter extends BaseAIAdapterImpl {
     } catch (error: any) {
       this.handleError(error)
       throw error // 确保错误被传播
-      throw error // 确保错误被传播
     }
   }
 
@@ -548,6 +547,129 @@ class DeepSeekAdapter extends BaseAIAdapterImpl {
   }
 }
 
+// 智谱AI适配器实现
+class ZhipuAIAdapter extends BaseAIAdapterImpl {
+  constructor(config: AIProviderConfig) {
+    super('zhipu', config)
+  }
+
+  async sendMessage(params: AIChatParams): Promise<AIResponse> {
+    try {
+      // 智谱AI使用OpenAI兼容API格式，但可能有不同的baseURL
+      const client = new OpenAI({
+        apiKey: this.config.apiKey || '',
+        baseURL: this.config.baseURL || 'https://open.bigmodel.cn/api/paas/v4',
+        timeout: this.config.timeout
+      })
+
+      // OpenAI消息格式
+      const openAIMessages = params.messages.map(msg => ({
+        role: msg.role as 'system' | 'user' | 'assistant',
+        content: msg.content
+      }))
+
+      const response = await client.chat.completions.create({
+        model: params.model || 'glm-4',
+        max_tokens: params.maxTokens,
+        temperature: params.temperature,
+        messages: openAIMessages,
+        stream: false
+      })
+
+      const choice = response.choices[0]
+      return {
+        content: choice.message.content || '',
+        model: params.model || 'glm-4',
+        provider: 'zhipu',
+        usage: {
+          promptTokens: response.usage?.prompt_tokens || 0,
+          completionTokens: response.usage?.completion_tokens || 0,
+          totalTokens: response.usage?.total_tokens || 0
+        },
+        finishReason: choice.finish_reason
+      }
+    } catch (error: any) {
+      this.handleError(error)
+      throw error // 确保错误被传播
+    }
+  }
+
+  async *streamMessage(params: AIChatParams): AsyncIterable<AIStreamChunk> {
+    const client = new OpenAI({
+      apiKey: this.config.apiKey || '',
+      baseURL: this.config.baseURL || 'https://open.bigmodel.cn/api/paas/v4',
+      timeout: this.config.timeout
+    })
+
+    // OpenAI消息格式
+    const openAIMessages = params.messages.map(msg => ({
+      role: msg.role as 'system' | 'user' | 'assistant',
+      content: msg.content
+    }))
+
+    try {
+      const stream = await client.chat.completions.create({
+        model: params.model || 'glm-4',
+        max_tokens: params.maxTokens,
+        temperature: params.temperature,
+        messages: openAIMessages,
+        stream: true
+      })
+
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content
+        if (delta) {
+          yield {
+            type: 'text',
+            content: delta,
+            delta
+          }
+        }
+      }
+    } catch (error: any) {
+      this.handleError(error)
+      throw error // 确保错误被传播
+    }
+  }
+
+  async getModels(): Promise<AIModel[]> {
+    return [
+      'glm-4',
+      'glm-4v',
+      'glm-3-turbo'
+    ]
+  }
+
+  async estimateCost(params: CostEstimationParams): Promise<CostEstimate> {
+    // 智谱AI定价估算（人民币/百万token，转换为美元估算）
+    // 参考：GLM-4约5元/百万token，GLM-3-Turbo约1元/百万token
+    const cnyToUsd = 0.14 // 近似汇率
+
+    const pricing: Record<AIModel, { input: number; output: number }> = {
+      'glm-4': { input: 5 * cnyToUsd, output: 10 * cnyToUsd },
+      'glm-4v': { input: 8 * cnyToUsd, output: 15 * cnyToUsd },
+      'glm-3-turbo': { input: 1 * cnyToUsd, output: 2 * cnyToUsd }
+    }
+
+    const modelPricing = pricing[params.model] || pricing['glm-4']
+    const promptCost = (params.promptTokens / 1_000_000) * modelPricing.input
+    const completionCost = (params.completionTokens / 1_000_000) * modelPricing.output
+
+    return {
+      provider: 'zhipu',
+      model: params.model,
+      promptCost,
+      completionCost,
+      totalCost: promptCost + completionCost,
+      currency: 'USD',
+      perMillionTokens: {
+        prompt: modelPricing.input,
+        completion: modelPricing.output
+      }
+    }
+  }
+}
+
 // 主AI服务实现
 export class AIService implements IAIService {
   private adapters: Map<AIProvider, BaseAIAdapterImpl>
@@ -611,7 +733,7 @@ export class AIService implements IAIService {
       case 'deepseek':
         return new DeepSeekAdapter(config)
       case 'zhipu':
-        // return new ZhipuAIAdapter(config)
+        return new ZhipuAIAdapter(config)
       case 'kimi':
         // return new KimiAdapter(config)
       default:
