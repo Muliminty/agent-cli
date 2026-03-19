@@ -1,5 +1,7 @@
 # 长效运行智能体CLI工具 - 进度文档
 
+> 最新重构交接方案：`!doc/2026-03-19-Agent-CLI重构实施方案.md`
+
 ## 项目概述
 实现《Effective harnesses for long-running agents》文章中描述的双轨方案，创建一个独立的Node.js/TypeScript CLI工具，用于管理长效运行智能体项目，支持初始化、增量进展、状态跟踪和自动化测试。
 
